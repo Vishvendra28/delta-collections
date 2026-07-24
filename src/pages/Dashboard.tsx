@@ -288,13 +288,13 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
       <div className="card" style={{ display: 'flex', padding: 0, overflow: 'hidden' }}>
 
         {/* Left: MTD Collection */}
-        <div style={{ flex: 1, padding: '14px 22px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5 }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Total MTD Collection</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--brand)', lineHeight: 1.15 }}>{formatCrRounded(mtdTotal)}</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, padding: '10px 18px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Total MTD Collection</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand)', lineHeight: 1.1 }}>{formatCrRounded(mtdTotal)}</div>
+          <div style={{ fontSize: 11, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
             <span>{uniqueCustomers} customers · {filtered.length} txns</span>
             {momDelta !== null && (
-              <span style={{ fontWeight: 700, color: momDelta >= 0 ? 'var(--success)' : 'var(--danger)', fontSize: 11, background: momDelta >= 0 ? '#d1fae5' : '#fee2e2', padding: '1px 7px', borderRadius: 99 }}>
+              <span style={{ fontWeight: 700, color: momDelta >= 0 ? 'var(--success)' : 'var(--danger)', fontSize: 10.5, background: momDelta >= 0 ? '#d1fae5' : '#fee2e2', padding: '1px 6px', borderRadius: 99 }}>
                 {momDelta >= 0 ? '▲' : '▼'} {Math.abs(momDelta).toFixed(1)}% vs prev month
               </span>
             )}
@@ -303,43 +303,38 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
 
         {/* Right: Target vs Actual */}
         <div onClick={() => onNavigate('target')}
-          style={{ flex: 1, padding: '14px 22px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Target vs Actual</span>
+          style={{ flex: 1, padding: '10px 18px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Target vs Actual</span>
             <span style={{ fontSize: 10, color: 'var(--brand)', fontWeight: 600 }}>View Details ↗</span>
           </div>
           {targetTotal > 0 ? (
             <>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'baseline', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Target</div>
+                  <div style={{ fontSize: 9.5, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 1 }}>Target</div>
                   <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{formatCrRounded(targetTotal)}</div>
                 </div>
-                <div style={{ width: 1, height: 28, background: 'var(--border)', flexShrink: 0 }} />
+                <div style={{ width: 1, height: 24, background: 'var(--border)', flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Actual</div>
+                  <div style={{ fontSize: 9.5, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 1 }}>Actual</div>
                   <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--brand)' }}>{formatCrRounded(mtdTotal)}</div>
                 </div>
+                {(() => {
+                  const pct = (mtdTotal / targetTotal) * 100;
+                  const color = pct >= 80 ? 'var(--success)' : pct >= 50 ? '#d97706' : 'var(--danger)';
+                  const bg    = pct >= 80 ? '#d1fae5' : pct >= 50 ? '#fef3c7' : '#fee2e2';
+                  return <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 700, color, background: bg, padding: '2px 8px', borderRadius: 99 }}>{pct.toFixed(1)}%</span>;
+                })()}
               </div>
               {(() => {
-                const pct = targetTotal > 0 ? (mtdTotal / targetTotal) * 100 : 0;
+                const pct = (mtdTotal / targetTotal) * 100;
                 const color = pct >= 80 ? 'var(--success)' : pct >= 50 ? '#d97706' : 'var(--danger)';
-                const bg    = pct >= 80 ? '#d1fae5' : pct >= 50 ? '#fef3c7' : '#fee2e2';
-                return (
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>{monthLabel(targetMonth)}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color, background: bg, padding: '1px 8px', borderRadius: 99 }}>{pct.toFixed(1)}%</span>
-                    </div>
-                    <div style={{ height: 5, borderRadius: 99, background: 'var(--border)' }}>
-                      <div style={{ height: '100%', borderRadius: 99, background: color, width: `${Math.min(pct, 100)}%`, transition: 'width 0.4s' }} />
-                    </div>
-                  </div>
-                );
+                return <div style={{ height: 4, borderRadius: 99, background: 'var(--border)' }}><div style={{ height: '100%', borderRadius: 99, background: color, width: `${Math.min(pct, 100)}%`, transition: 'width 0.4s' }} /></div>;
               })()}
             </>
           ) : (
-            <div style={{ fontSize: 13, color: 'var(--text3)' }}>No target uploaded for {monthLabel(targetMonth)}</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)' }}>No target uploaded for {monthLabel(targetMonth)}</div>
           )}
         </div>
 
