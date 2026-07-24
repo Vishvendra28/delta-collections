@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Environment — never commit secrets
+.env
+
+# Build output — Railway builds this on their server
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

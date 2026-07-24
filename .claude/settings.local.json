@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(markitdown \"C:\\\\Users\\\\Dell\\\\OneDrive\\\\Desktop\\\\Axis bank june recheck.xlsx\")",
+      "Read(//c/Users/Dell/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/1000b5bc-73e1-4be7-b5a2-00e5b0eb8e4d/ad3fda53-3326-4e45-b2cc-44131ba1e82b/skills/xlsx/**)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}

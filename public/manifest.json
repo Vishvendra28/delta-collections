@@ -1,0 +1,13 @@
+{
+  "name": "Delta Collections",
+  "short_name": "Delta",
+  "description": "Delta Collections — internal collections management app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "landscape-primary",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

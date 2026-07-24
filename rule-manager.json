@@ -1,0 +1,345 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-07-20",
+  "description": "Delta Collections Rule Manager — maps bank narration keywords to canonical customer names",
+
+  "criticalFixes": [
+    {
+      "id": "FIX-001",
+      "note": "CITIN266 is Citibank routing code used by MULTIPLE companies — must require company name alongside it. Never use CITIN266 alone as a rule."
+    },
+    {
+      "id": "FIX-002",
+      "note": "ITC LIMITED — 'ITC' is only 3 chars so use full phrase 'ITC LIMITED' or 'ITC LTD' as keyword, never just 'ITC' alone."
+    },
+    {
+      "id": "FIX-003",
+      "note": "Short company names (4 chars or less) must always use 2-word phrase as keyword to avoid false positives."
+    }
+  ],
+
+  "excludePatterns": [
+    { "pattern": "^BRN",         "reason": "Branch transfer — not a customer collection" },
+    { "pattern": "^RTGS",        "reason": "RTGS internal — not NEFT collection" },
+    { "pattern": "^INB",         "reason": "Internet banking transfer" },
+    { "pattern": "^TD",          "reason": "Term Deposit" },
+    { "pattern": "Int.Coll",     "reason": "Bank interest — not a customer payment" },
+    { "pattern": "Escrow Trf",   "reason": "Internal escrow transfer" },
+    { "pattern": "REFUND OF ESCROW", "reason": "Internal escrow refund" },
+    { "pattern": "ZAST LOGISOLUT-Transin", "reason": "Internal inter-account transfer Zast to Transin" },
+    { "pattern": "ZAST LOGISOLUT-Zast",    "reason": "Internal inter-company transfer" },
+    { "pattern": "REV-IMPS",     "reason": "Reversal of IMPS payment — not a collection" },
+    { "pattern": "NEFT RETURN",  "reason": "Bounced NEFT — not a collection" },
+    { "pattern": "DELHIVERY",    "reason": "Delhivery Limited — logistics vendor, not a customer" },
+    { "pattern": "VENTURA TRADIN", "reason": "Ventura Trading — not a customer" },
+    { "pattern": "SCORPION EXPRESS", "reason": "Scorpion Express Pvt Ltd — not a customer" }
+  ],
+
+  "rules": [
+    {
+      "id": "R-001",
+      "customer": "HINDUSTAN UNILEVER LIMITED",
+      "kam": "Latha",
+      "keywords": ["HINDUSTAN UNILEVER", "HINDUNILVR"],
+      "compoundRules": [
+        { "allOf": ["CITIN266", "HINDUSTAN UNILEVER"], "note": "CITIN266 alone is NOT enough — must also contain company name" }
+      ],
+      "exclude": ["CITIN266"],
+      "note": "CRITICAL: Do NOT use CITIN266 alone — Perfetti, Voltas, Pidilite, SGIPL all use same Citibank routing"
+    },
+    {
+      "id": "R-002",
+      "customer": "ASIAN PAINTS LIMITED",
+      "kam": "Latha",
+      "keywords": ["ASIAN PAINTS", "HDFCH010", "ASIANPAINT"]
+    },
+    {
+      "id": "R-003",
+      "customer": "ITC LIMITED",
+      "kam": "Pratik",
+      "keywords": ["ITC LIMITED", "ITC LTD", "ITC-ABD"],
+      "note": "Never use 'ITC' alone — too short, will false-match. Use full phrase only."
+    },
+    {
+      "id": "R-004",
+      "customer": "PERFETTI VAN MELLE INDIA PRIVATE LIMITED",
+      "kam": "Parul",
+      "keywords": ["PERFETTI", "PMVBRY", "PVMIL", "PERFETTI VAN MELLE"],
+      "compoundRules": [
+        { "allOf": ["CITIN266", "PERFETTI"], "note": "Citibank routing + company name" }
+      ]
+    },
+    {
+      "id": "R-005",
+      "customer": "VOLTAS LIMITED",
+      "kam": "Ritika",
+      "keywords": ["VOLTAS"],
+      "compoundRules": [
+        { "allOf": ["CITIN266", "VOLTAS"], "note": "Citibank routing + company name" }
+      ]
+    },
+    {
+      "id": "R-006",
+      "customer": "PIDILITE INDUSTRIES LIMITED",
+      "kam": "Nikita",
+      "keywords": ["PIDILITE"],
+      "compoundRules": [
+        { "allOf": ["CITIN266", "PIDILITE"], "note": "Citibank routing + company name" }
+      ]
+    },
+    {
+      "id": "R-007",
+      "customer": "SAINT-GOBAIN INDIA PRIVATE LIMITED (GYPROC)",
+      "kam": "Vikash",
+      "keywords": ["SGIPL", "GYPROC", "SAINT GOBAIN", "SGIPLN"],
+      "compoundRules": [
+        { "allOf": ["CITIN266", "SGIPL"], "note": "Citibank routing + company name" }
+      ]
+    },
+    {
+      "id": "R-008",
+      "customer": "JINDAL STEEL & POWER LTD.",
+      "kam": "Deepak",
+      "keywords": ["JINDAL STEEL", "JSWP", "JINDAL STEEL AND POWER", "JINDAL STEEL & POWER"],
+      "note": "Use 'JINDAL STEEL' as base keyword — catches both '& POWER' and 'AND POWER' variants"
+    },
+    {
+      "id": "R-009",
+      "customer": "Nestle India Ltd",
+      "kam": "Kamal",
+      "keywords": ["NESTLE", "NESTL", "DEUTH"],
+      "note": "DEUTH = Deutsche Bank routing used by Nestle for payments"
+    },
+    {
+      "id": "R-010",
+      "customer": "VALVOLINE CUMMINS PRIVATE LIMITED",
+      "kam": "Kunal",
+      "keywords": ["VALVOLINE", "VALVOLINE CUMMINS"],
+      "note": "GT sends as partial name 'VALVOLINE CUMMINS' — 'VALVOLINE' alone is unique enough"
+    },
+    {
+      "id": "R-011",
+      "customer": "Apar Industries Limited",
+      "kam": "Deepak",
+      "keywords": ["APAR INDUSTRIES", "APAR IND"],
+      "note": "Never use 'APAR' alone — only 4 chars, too short. Must use 2-word phrase."
+    },
+    {
+      "id": "R-012",
+      "customer": "Epsilon Carbon Pvt Limited",
+      "kam": "Vikash",
+      "keywords": ["EPSILON", "EPSILON CARBON"],
+      "note": "GT shows as 'epsilon Pvt ltd' — same company. Use case-insensitive match."
+    },
+    {
+      "id": "R-013",
+      "customer": "Colgate-Palmolive (India) Limited",
+      "kam": "Latha",
+      "keywords": ["COLGATE", "COLGATE-PALMOLIVE", "COLGATE PALMOLIVE"]
+    },
+    {
+      "id": "R-014",
+      "customer": "Qwik Supply Chain Pvt Ltd",
+      "kam": "Pratik",
+      "keywords": ["QWIK", "HDF0231522", "QWIK SUPPLY"],
+      "note": "HDF0231522 = unique bank payer code for Qwik Supply Chain — use as hard rule. ₹4.67 Cr in June."
+    },
+    {
+      "id": "R-015",
+      "customer": "BUNGE INDIA PRIVATE LIMITED",
+      "kam": "Parul",
+      "keywords": ["BUNGE INDIA", "BUNGE", "DEUTH00"]
+    },
+    {
+      "id": "R-016",
+      "customer": "Balaji Action Buildwell Pvt LTD",
+      "kam": "Ritika",
+      "keywords": ["BALAJI ACTION", "SELCR", "BALAJI ACTION BUILDWELL"],
+      "note": "SELCR = ACH/NACH code used by Balaji Action Buildwell"
+    },
+    {
+      "id": "R-017",
+      "customer": "TATA STEEL LIMITED",
+      "kam": "Deepak",
+      "keywords": ["TATA STEEL"]
+    },
+    {
+      "id": "R-018",
+      "customer": "AKZO NOBEL INDIA LIMITED",
+      "kam": "Kamal",
+      "keywords": ["AKZO NOBEL", "AKZONOBEL"]
+    },
+    {
+      "id": "R-019",
+      "customer": "Parle Agro Pvt Ltd",
+      "kam": "Parul",
+      "keywords": ["PARLE AGRO", "0811OP"]
+    },
+    {
+      "id": "R-020",
+      "customer": "STEEL INFRA SOLUTIONS PRIVATE LIMITED",
+      "kam": "Vikash",
+      "keywords": ["STEEL INFRA", "STEEL INFRA SOLUTIONS"]
+    },
+    {
+      "id": "R-021",
+      "customer": "Prince Pipes And Fittings Ltd",
+      "kam": "Kunal",
+      "keywords": ["PRINCE PIPES", "PRINCE PIPE"]
+    },
+    {
+      "id": "R-022",
+      "customer": "TVS Supply Chain Solutions Ltd.",
+      "kam": "Latha",
+      "keywords": ["TVS SUPPLY", "TVS SUPPLY CHAIN"]
+    },
+    {
+      "id": "R-023",
+      "customer": "GRAVITA INDIA LIMITED",
+      "kam": "Vikash",
+      "keywords": ["GRAVITA INDIA", "GRAVITA"]
+    },
+    {
+      "id": "R-024",
+      "customer": "Exide Industries Limited",
+      "kam": "Deepak",
+      "keywords": ["EXIDE INDUSTRIES", "EXIDE IND"]
+    },
+    {
+      "id": "R-025",
+      "customer": "JSW PAINTS LIMITED",
+      "kam": "Kamal",
+      "keywords": ["JSW PAINTS"]
+    },
+    {
+      "id": "R-026",
+      "customer": "BERGER PAINTS LIMITED",
+      "kam": "Latha",
+      "keywords": ["BERGER PAINTS", "BERGER"]
+    },
+    {
+      "id": "R-027",
+      "customer": "ORIENT ELECTRIC LIMITED",
+      "kam": "Ritika",
+      "keywords": ["ORIENT ELECTRIC"]
+    },
+    {
+      "id": "R-028",
+      "customer": "LIVGUARD ENERGY TECHNOLOGIES PRIVATE LIMITED",
+      "kam": "Nikita",
+      "keywords": ["LIVGUARD"]
+    },
+    {
+      "id": "R-029",
+      "customer": "JTL INDUSTRIES LIMITED",
+      "kam": "Vikash",
+      "keywords": ["JTL INDUSTRIES", "JTL IND"]
+    },
+    {
+      "id": "R-030",
+      "customer": "GARG TUBE EXPORT LLP",
+      "kam": "Vikash",
+      "keywords": ["GARG TUBE"]
+    },
+    {
+      "id": "R-031",
+      "customer": "SYSTEMATIC INDUSTRIES PRIVATE LIMITED",
+      "kam": "Vikash",
+      "keywords": ["SYSTEMATIC INDUSTRIES", "SYSTEMATIC IND"]
+    },
+    {
+      "id": "R-032",
+      "customer": "IVL Dhunseri Petrochem Industries Private Limited",
+      "kam": "Deepak",
+      "keywords": ["IVL DHUNSERI", "DHUNSERI"]
+    },
+    {
+      "id": "R-033",
+      "customer": "SINGHANIA RESOURCES PRIVATE LIMITED",
+      "kam": "Vikash",
+      "keywords": ["SINGHANIA RESOURCES", "SINGHANIA"]
+    },
+    {
+      "id": "R-034",
+      "customer": "INDORAMA YARNS PRIVATE LIMITED",
+      "kam": "Parul",
+      "keywords": ["INDORAMA YARNS", "INDORAMA"]
+    },
+    {
+      "id": "R-035",
+      "customer": "SOUTHERN CARGO LOGISTICS PRIVATE LIMITED",
+      "kam": "Kunal",
+      "keywords": ["SOUTHERN CARGO"]
+    },
+    {
+      "id": "R-036",
+      "customer": "NCUBATE INDIA SERVICES PRIVATE LIMITED",
+      "kam": "Nikita",
+      "keywords": ["NCUBATE"]
+    },
+    {
+      "id": "R-037",
+      "customer": "Ayansh Global Private Limited",
+      "kam": "Kamal",
+      "keywords": ["AYANSH GLOBAL", "AYANSH"]
+    },
+    {
+      "id": "R-038",
+      "customer": "NAVEEN JAIN METAL UDYOG",
+      "kam": "Vikash",
+      "keywords": ["NAVEEN JAIN METAL", "NAVEEN JAIN"]
+    },
+    {
+      "id": "R-039",
+      "customer": "RUKMANI ELECTRICAL AND COMPONENTS PVT. LTD.",
+      "kam": "Ritika",
+      "keywords": ["RUKMANI ELECTRICAL", "RUKMANI"]
+    },
+    {
+      "id": "R-040",
+      "customer": "J P Traders",
+      "kam": "Kunal",
+      "keywords": ["J P TRADERS", "JP TRADERS"]
+    },
+    {
+      "id": "R-041",
+      "customer": "THE BOMBAY SEEDS SUPPLY COMPANY",
+      "kam": "Parul",
+      "keywords": ["BOMBAY SEEDS", "THE BOMBAY SEEDS"]
+    },
+    {
+      "id": "R-042",
+      "customer": "MOHIT Enterprises",
+      "kam": "Kamal",
+      "keywords": ["MOHIT ENTERPRISES"]
+    },
+    {
+      "id": "R-043",
+      "customer": "Bright Metals India Pvt Ltd",
+      "kam": "Vikash",
+      "keywords": ["BRIGHT METALS"]
+    },
+    {
+      "id": "R-044",
+      "customer": "Mittal Steels",
+      "kam": "Vikash",
+      "keywords": ["MITTAL STEELS"]
+    },
+    {
+      "id": "R-045",
+      "customer": "SHREE METAL TRADERS",
+      "kam": "Vikash",
+      "keywords": ["SHREE METAL TRADERS", "SHREE METAL"]
+    }
+  ],
+
+  "pendingClarification": [],
+
+  "matchingLogic": {
+    "priority": "Rules are evaluated top to bottom. First match wins.",
+    "caseSensitive": false,
+    "compoundRuleLogic": "allOf = ALL keywords must be present in narration",
+    "minKeywordLength": 5,
+    "shortNamePolicy": "Names with base word ≤ 4 chars must use 2-word phrase as keyword (e.g. APAR → APAR INDUSTRIES)"
+  }
+}
