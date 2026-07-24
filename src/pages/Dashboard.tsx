@@ -131,14 +131,30 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetMonth, user, demoUsers, getTargetRows, version]);
 
-  const PAGE_SIZE = 10;
   const allDates = useMemo(() => [...new Set(filtered.map(t => t.date))].sort(), [filtered]);
+
+  const periodGroups = useMemo(() => {
+    const p1 = allDates.filter(d => new Date(d + 'T00:00:00').getDate() <= 10);
+    const p2 = allDates.filter(d => { const day = new Date(d + 'T00:00:00').getDate(); return day >= 11 && day <= 20; });
+    const p3 = allDates.filter(d => new Date(d + 'T00:00:00').getDate() >= 21);
+    return [p1, p2, p3].filter(g => g.length > 0);
+  }, [allDates]);
+
   const visibleDates = useMemo(() => {
     if (!showAllDates) return allDates.slice(-3);
-    const start = datePage * PAGE_SIZE;
-    return allDates.slice(start, start + PAGE_SIZE);
-  }, [showAllDates, allDates, datePage]);
-  const totalPages = Math.ceil(allDates.length / PAGE_SIZE);
+    return periodGroups[datePage] ?? [];
+  }, [showAllDates, allDates, periodGroups, datePage]);
+
+  const totalPages = periodGroups.length;
+
+  const periodLabel = useMemo(() => {
+    if (!showAllDates || !periodGroups[datePage]?.length) return '';
+    const dates = periodGroups[datePage];
+    const first = new Date(dates[0] + 'T00:00:00');
+    const last  = new Date(dates[dates.length - 1] + 'T00:00:00');
+    const mon   = first.toLocaleString('en-IN', { month: 'short' });
+    return `P${datePage + 1} · ${mon} ${first.getDate()}–${last.getDate()}`;
+  }, [showAllDates, periodGroups, datePage]);
 
   const customerRows = useMemo(() => {
     const map: Record<string, { total: number; byDate: Record<string, number>; kam: string; rh: string }> = {};
@@ -409,7 +425,7 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                   onClick={() => setDatePage(p => p - 1)}
                 >← Prev</button>
                 <span style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap' }}>
-                  Dates {datePage * PAGE_SIZE + 1}–{Math.min((datePage + 1) * PAGE_SIZE, allDates.length)} of {allDates.length}
+                  {periodLabel}
                 </span>
                 <button
                   className="btn btn-secondary"
@@ -434,8 +450,8 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
           <table>
             <thead>
               <tr>
-                <th style={{ minWidth: 190, padding: '7px 10px', position: 'sticky', left: 0, background: 'var(--surface2)', zIndex: 2, borderRight: '1px solid var(--border)' }}>Customer Name</th>
-                <th style={{ minWidth: 62, padding: '7px 8px', borderRight: '2px solid var(--border)' }}>KAM</th>
+                <th style={{ minWidth: showAllDates ? 190 : 240, ...(showAllDates && { padding: '7px 10px' }), position: 'sticky', left: 0, background: 'var(--surface2)', zIndex: 2, borderRight: showAllDates ? '1px solid var(--border)' : undefined }}>Customer Name</th>
+                <th style={{ ...(showAllDates ? { minWidth: 62, padding: '7px 8px' } : {}), borderRight: '2px solid var(--border)' }}>KAM</th>
                 {visibleDates.map(d => {
                   const label = new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                   const isActive = sortDate === d;
@@ -443,7 +459,9 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                     <th key={d}
                       onClick={() => setSortDate(isActive ? null : d)}
                       style={{
-                        textAlign: 'right', minWidth: 95, padding: '7px 8px', cursor: 'pointer',
+                        textAlign: 'right', minWidth: showAllDates ? 95 : 140,
+                        ...(showAllDates && { padding: '7px 8px' }),
+                        cursor: 'pointer',
                         borderRight: '2px solid var(--border)',
                         background: isActive ? 'var(--brand-subtle, #e8f0fe)' : undefined,
                         userSelect: 'none',
@@ -454,17 +472,17 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                     </th>
                   );
                 })}
-                <th style={{ textAlign: 'right', minWidth: 115, padding: '7px 10px', background: 'var(--surface2)' }}>Grand Total</th>
+                <th style={{ textAlign: 'right', minWidth: showAllDates ? 115 : 155, ...(showAllDates && { padding: '7px 10px' }), background: 'var(--surface2)' }}>Grand Total</th>
               </tr>
             </thead>
             <tbody>
               {customerRows.map(([customer, data]) => (
                 <tr key={customer}>
-                  <td style={{ fontWeight: 600, padding: '5px 10px', position: 'sticky', left: 0, background: 'var(--surface)', zIndex: 1, fontSize: 13, borderRight: '1px solid var(--border)' }}>{customer}</td>
-                  <td style={{ color: 'var(--text2)', fontSize: 12, padding: '5px 8px', borderRight: '2px solid var(--border)' }}>{data.kam}</td>
+                  <td style={{ fontWeight: 600, ...(showAllDates && { padding: '5px 10px' }), position: 'sticky', left: 0, background: 'var(--surface)', zIndex: 1, fontSize: showAllDates ? 13 : 14, borderRight: showAllDates ? '1px solid var(--border)' : undefined }}>{customer}</td>
+                  <td style={{ color: 'var(--text2)', fontSize: showAllDates ? 12 : 13, ...(showAllDates && { padding: '5px 8px' }), borderRight: '2px solid var(--border)' }}>{data.kam}</td>
                   {visibleDates.map(d => (
                     <td key={d} style={{
-                      textAlign: 'right', padding: '5px 8px', fontSize: 13,
+                      textAlign: 'right', ...(showAllDates && { padding: '5px 8px', fontSize: 13 }),
                       borderRight: '2px solid var(--border)',
                       color: data.byDate[d] ? 'var(--text)' : 'var(--text3)',
                       fontWeight: data.byDate[d] ? 600 : 400,
@@ -473,20 +491,20 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                       {data.byDate[d] ? formatCrRounded(data.byDate[d]) : '—'}
                     </td>
                   ))}
-                  <td style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 800, color: 'var(--brand)', fontSize: 13 }}>{formatCrRounded(data.total)}</td>
+                  <td style={{ textAlign: 'right', ...(showAllDates && { padding: '5px 10px' }), fontWeight: 800, color: 'var(--brand)', fontSize: showAllDates ? 13 : 14 }}>{formatCrRounded(data.total)}</td>
                 </tr>
               ))}
 
               {customerRows.length > 0 && (
                 <tr style={{ background: 'var(--surface2)' }}>
-                  <td style={{ fontWeight: 800, fontSize: 13, padding: '5px 10px', position: 'sticky', left: 0, background: 'var(--surface2)', borderRight: '1px solid var(--border)' }}>Grand Total</td>
-                  <td style={{ padding: '5px 8px', borderRight: '2px solid var(--border)' }} />
+                  <td style={{ fontWeight: 800, fontSize: showAllDates ? 13 : 14, ...(showAllDates && { padding: '5px 10px' }), position: 'sticky', left: 0, background: 'var(--surface2)', borderRight: showAllDates ? '1px solid var(--border)' : undefined }}>Grand Total</td>
+                  <td style={{ ...(showAllDates && { padding: '5px 8px' }), borderRight: '2px solid var(--border)' }} />
                   {visibleDates.map(d => (
-                    <td key={d} style={{ textAlign: 'right', padding: '5px 8px', fontSize: 13, fontWeight: 700, borderRight: '2px solid var(--border)' }}>
+                    <td key={d} style={{ textAlign: 'right', ...(showAllDates && { padding: '5px 8px', fontSize: 13 }), fontWeight: 700, borderRight: '2px solid var(--border)' }}>
                       {dateTotals[d] ? formatCrRounded(dateTotals[d]) : '—'}
                     </td>
                   ))}
-                  <td style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 800, color: 'var(--brand)', fontSize: 13 }}>{formatCrRounded(mtdTotal)}</td>
+                  <td style={{ textAlign: 'right', ...(showAllDates && { padding: '5px 10px' }), fontWeight: 800, color: 'var(--brand)', fontSize: showAllDates ? 13 : 15 }}>{formatCrRounded(mtdTotal)}</td>
                 </tr>
               )}
 
