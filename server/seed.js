@@ -310,6 +310,16 @@ const RULES = [
   { id: 'R-139', customer: 'Modenik Lifestyle Private Limited', keywords: ['MODENIK'], compound_rules: [], exclude_keywords: [], note: null, source: 'system', created_at: '2026-07-22' },
 ];
 
+export async function ensureAdmin() {
+  const defaultHash = await bcrypt.hash('Delta@123', 10);
+  await query(`
+    INSERT INTO users (id, name, email, role, active, password_hash)
+    VALUES ('U001', 'Admin User', 'admin@delta.in', 'admin', true, $1)
+    ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, active = true
+  `, [defaultHash]);
+  console.log('Admin account ensured.');
+}
+
 export async function seedDatabase() {
   const meta = await query(`SELECT value FROM seed_meta WHERE key = 'seeded_v2'`);
   if (meta.rows.length > 0) {
