@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTransactions } from '../context/TransactionsContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCr, formatDate, daysPending } from '../utils/formatters';
 import { KAMS, RHS } from '../data/customers';
+import * as XLSX from 'xlsx';
 
 export function PendingAdvise() {
   const { transactions, uploadAdvise, bulkUploadAdvise, updateTransaction } = useTransactions();
@@ -27,6 +28,20 @@ export function PendingAdvise() {
     return [...set].sort().reverse();
   }, [transactions]);
 
+  const autoMonthRef = useRef(false);
+  useEffect(() => {
+    if (!autoMonthRef.current && availableMonths.length > 0) {
+      autoMonthRef.current = true;
+      setFMonth(availableMonths[0]);
+    }
+  }, [availableMonths]);
+
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [expMonth,        setExpMonth]        = useState('');
+  const [expCustSearch,   setExpCustSearch]   = useState('');
+  const [expCustomer,     setExpCustomer]     = useState('');
+  const [expCustOpen,     setExpCustOpen]     = useState(false);
+
   const monthLabel = (m: string) => {
     const [yr, mo] = m.split('-');
     return new Date(Number(yr), Number(mo) - 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
@@ -38,6 +53,37 @@ export function PendingAdvise() {
     if (user?.role === 'rh' || user?.role === 'arpm')  txs = txs.filter(t => t.rh  === user.rhName);
     return txs.sort((a, b) => a.date.localeCompare(b.date));
   }, [transactions, user]);
+
+  const allPendingCustomers = useMemo(() => {
+    return [...new Set(allPending.map(t => t.customer))].sort();
+  }, [allPending]);
+
+  const filteredExpCusts = useMemo(() => {
+    if (!expCustSearch) return allPendingCustomers;
+    return allPendingCustomers.filter(c => c.toLowerCase().includes(expCustSearch.toLowerCase()));
+  }, [allPendingCustomers, expCustSearch]);
+
+  function handleExport() {
+    let rows = allPending;
+    if (expMonth)    rows = rows.filter(t => t.date.startsWith(expMonth));
+    if (expCustomer) rows = rows.filter(t => t.customer === expCustomer);
+    const data = rows.map(t => ({
+      Date: t.date,
+      Customer: t.customer,
+      Bank: t.bank,
+      'Amount (₹)': t.amount,
+      'Ref No': t.refNo,
+      Narration: t.narration,
+      KAM: t.kam,
+      RH: t.rh,
+      'Days Pending': daysPending(t.date),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Pending Advises');
+    XLSX.writeFile(wb, `pending-advises${expMonth ? `-${expMonth}` : ''}.xlsx`);
+    setShowExportModal(false);
+  }
 
   const filtered = useMemo(() => {
     let txs = allPending;
@@ -173,6 +219,10 @@ export function PendingAdvise() {
               </button>
             )}
             <button className="btn btn-secondary" style={{ fontSize: 13 }}
+              onClick={() => { setExpMonth(fMonth); setExpCustomer(''); setExpCustSearch(''); setShowExportModal(true); }}>
+              <i className="ti ti-table-export" /> Export Excel
+            </button>
+            <button className="btn btn-secondary" style={{ fontSize: 13 }}
               onClick={() => { setFMonth(''); setFKAM(''); setFRH(''); setFDate(''); setFCustomer(''); setFRef(''); }}>
               Clear Filters
             </button>
@@ -306,6 +356,64 @@ export function PendingAdvise() {
                 </>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowExportModal(false); }}>
+          <div className="card" style={{ padding: 28, width: 420 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Export Pending Payment Advises</h3>
+
+            <div style={{ marginBottom: 14 }}>
+              <div className="filter-label" style={{ marginBottom: 4 }}>Month</div>
+              <select value={expMonth} onChange={e => setExpMonth(e.target.value)} style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)' }}>
+                <option value="">All Months</option>
+                {availableMonths.map(m => <option key={m} value={m}>{monthLabel(m)}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 20, position: 'relative' }}>
+              <div className="filter-label" style={{ marginBottom: 4 }}>Customer Name</div>
+              <input
+                value={expCustSearch || expCustomer}
+                placeholder="Search or select customer..."
+                onFocus={() => { setExpCustOpen(true); setExpCustSearch(expCustomer); setExpCustomer(''); }}
+                onChange={e => { setExpCustSearch(e.target.value); setExpCustomer(''); setExpCustOpen(true); }}
+                onBlur={() => setTimeout(() => setExpCustOpen(false), 150)}
+                style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', boxSizing: 'border-box' }}
+              />
+              {expCustomer && <span style={{ position: 'absolute', right: 8, top: 30, fontSize: 11, color: 'var(--brand)', fontWeight: 700, cursor: 'pointer' }} onClick={() => { setExpCustomer(''); setExpCustSearch(''); }}>✕</span>}
+              {expCustOpen && filteredExpCusts.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', maxHeight: 180, overflowY: 'auto', zIndex: 50 }}>
+                  <div style={{ padding: '6px 10px', fontSize: 12, color: 'var(--text3)', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
+                    onMouseDown={() => { setExpCustomer(''); setExpCustSearch(''); setExpCustOpen(false); }}>
+                    All Customers
+                  </div>
+                  {filteredExpCusts.map(c => (
+                    <div key={c} style={{ padding: '7px 10px', fontSize: 13, cursor: 'pointer', color: 'var(--text)' }}
+                      onMouseDown={() => { setExpCustomer(c); setExpCustSearch(''); setExpCustOpen(false); }}>
+                      {c}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
+              {(() => {
+                let rows = allPending;
+                if (expMonth)    rows = rows.filter(t => t.date.startsWith(expMonth));
+                if (expCustomer) rows = rows.filter(t => t.customer === expCustomer);
+                return `${rows.length} row${rows.length !== 1 ? 's' : ''} will be exported`;
+              })()}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setShowExportModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleExport}>Download Excel</button>
+            </div>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Page } from '../App';
 import { useTransactions } from '../context/TransactionsContext';
 import { useAuth } from '../context/AuthContext';
@@ -32,8 +32,8 @@ export function Dashboard({ onNavigate }: Props) {
   const { user, demoUsers } = useAuth();
   const { version, getTargetMeta, getTargetRows, prefetchTarget } = useTarget();
 
-  const [fFY,       setFFY]       = useState(() => getFY(localStorage.getItem('delta_dashboard_month') ?? new Date().toISOString().slice(0, 7)));
-  const [fMonth,    setFMonth]    = useState(() => localStorage.getItem('delta_dashboard_month') ?? new Date().toISOString().slice(0, 7));
+  const [fFY,       setFFY]       = useState('');
+  const [fMonth,    setFMonth]    = useState('');
   const [fKAM,      setFKAM]      = useState('');
   const [fRH,       setFRH]       = useState('');
   const [fBank,     setFBank]     = useState('');
@@ -54,6 +54,15 @@ export function Dashboard({ onNavigate }: Props) {
 
   const scoped = useMemo(() => scopedTxs(transactions), [transactions]);
 
+  const autoMonthRef = useRef(false);
+  useEffect(() => {
+    if (!autoMonthRef.current && scoped.length > 0) {
+      autoMonthRef.current = true;
+      const months = [...new Set(scoped.map(t => t.date.slice(0, 7)))].sort().reverse();
+      if (months[0]) { setFMonth(months[0]); setFFY(getFY(months[0])); }
+    }
+  }, [scoped]);
+
   const filtered = useMemo(() => {
     let txs = scoped;
     if (fMonth) {
@@ -73,9 +82,7 @@ export function Dashboard({ onNavigate }: Props) {
   }, [scoped, fMonth, fFY, fKAM, fRH, fBank, fCompany, fDate, fCustomer, fRef]);
 
   const mtdTotal        = sumExact(filtered.map(t => t.amount));
-  const pendingAdvise   = transactions.filter(t => t.status === 'matched' && t.adviseStatus === 'pending').length;
-  const manualReview    = transactions.filter(t => t.status === 'manual_review').length;
-  const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
+const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
   const today           = new Date().toISOString().slice(0, 10);
   const todayTxs        = filtered.filter(t => t.date === today);
   const todayTotal      = sumExact(todayTxs.map(t => t.amount));
@@ -273,40 +280,12 @@ export function Dashboard({ onNavigate }: Props) {
     return new Date(Number(yr), Number(mo) - 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
   };
 
-  // Target upload alert — shown to everyone after day 7 if any KAM hasn't uploaded
-  const targetAlertBanner = useMemo(() => {
-    const today = new Date();
-    if (today.getDate() <= 7) return null;
-    const curMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    const kamNames = demoUsers.filter(u => u.role === 'kam' && u.kamName).map(u => u.kamName!);
-    let missing: string[];
-    if (user?.role === 'kam') {
-      missing = !getTargetMeta(user.kamName ?? '', curMonthYear) ? [user.kamName ?? ''] : [];
-    } else {
-      missing = kamNames.filter(k => !getTargetMeta(k, curMonthYear));
-    }
-    if (missing.length === 0) return null;
-    const label = today.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-    return { missing, label };
-  }, [demoUsers, user, getTargetMeta]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-      {/* ── Target upload alert ── */}
-      {targetAlertBanner && (
-        <div style={{ padding: '12px 16px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, color: '#92400e', fontSize: 13, display: 'flex', gap: 10, alignItems: 'center', cursor: 'pointer' }}
-          onClick={() => onNavigate('target')}>
-          <i className="ti ti-alert-triangle" style={{ fontSize: 18, flexShrink: 0 }} />
-          <span>
-            <strong>Target upload overdue</strong> — {targetAlertBanner.missing.join(', ')} {targetAlertBanner.missing.length > 1 ? 'have' : 'has'} not uploaded a target for {targetAlertBanner.label}. Uploads are due by the 7th.
-          </span>
-          <span style={{ marginLeft: 'auto', fontWeight: 600, whiteSpace: 'nowrap' }}>Go to Target →</span>
-        </div>
-      )}
-
       {/* ── KPI CARDS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
         <div className="card" style={{ padding: '20px 22px' }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Total MTD Collection</div>
@@ -360,20 +339,6 @@ export function Dashboard({ onNavigate }: Props) {
           ) : (
             <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8 }}>No target uploaded for {monthLabel(targetMonth)}</div>
           )}
-        </div>
-
-        <div className="card" onClick={() => onNavigate('pending-advise')}
-          style={{ padding: '20px 22px', cursor: 'pointer', borderColor: pendingAdvise > 0 ? '#f59e0b' : 'var(--border)', transition: 'box-shadow 0.15s' }}>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Pending Payment Advise</div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: pendingAdvise > 0 ? '#d97706' : 'var(--success)', letterSpacing: '-0.5px' }}>{pendingAdvise}</div>
-          <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 5, fontWeight: 500 }}>Click to upload ↗</div>
-        </div>
-
-        <div className="card" onClick={() => onNavigate('manual-review')}
-          style={{ padding: '20px 22px', cursor: 'pointer', borderColor: manualReview > 0 ? '#ef4444' : 'var(--border)', transition: 'box-shadow 0.15s' }}>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Unassigned in Review</div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: manualReview > 0 ? 'var(--danger)' : 'var(--success)', letterSpacing: '-0.5px' }}>{manualReview}</div>
-          <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 5, fontWeight: 500 }}>Click to review ↗</div>
         </div>
 
       </div>

@@ -36,7 +36,7 @@ const PAGE_TITLES: Record<Page, string> = {
   dashboard:        'Collection Dashboard',
   transactions:     'Transactions',
   'manual-review':  'Manual Review',
-  'pending-advise': 'Pending Payment Advise',
+  'pending-advise': 'Pending Payment Advises',
   import:           'Import Bank Statement',
   rules:            'Rule Manager',
   settings:         'Settings',

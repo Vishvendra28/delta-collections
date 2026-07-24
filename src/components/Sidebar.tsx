@@ -16,7 +16,7 @@ const NAV_ITEMS: { page: Page; label: string; icon: string; adminOnly?: boolean 
   { page: 'target',        label: 'Target vs Actual',       icon: 'ti-target' },
   { page: 'transactions',   label: 'Transactions',           icon: 'ti-arrows-exchange' },
   { page: 'manual-review',  label: 'Manual Review',          icon: 'ti-eye-check' },
-  { page: 'pending-advise', label: 'Pending Advise',         icon: 'ti-hourglass' },
+  { page: 'pending-advise', label: 'Pending Payment Advises', icon: 'ti-hourglass' },
   { page: 'import',         label: 'Import Statement',       icon: 'ti-upload', adminOnly: true },
   { page: 'rules',          label: 'Rule Manager',           icon: 'ti-adjustments-horizontal', adminOnly: true },
   { page: 'settings',       label: 'Settings',               icon: 'ti-settings', adminOnly: true },

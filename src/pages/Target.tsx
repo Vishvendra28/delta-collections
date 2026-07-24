@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '../context/AuthContext';
 import { useTransactions } from '../context/TransactionsContext';
@@ -219,7 +219,7 @@ export function Target() {
 
   // ─── State ─────────────────────────────────────────────────────────────────
 
-  const [selMonth,   setSelMonth]   = useState(() => localStorage.getItem('target_selMonth') ?? curMonth());
+  const [selMonth,   setSelMonth]   = useState('');
   const [selKam,     setSelKam]     = useState(() => isKAM ? myKam : 'all');
   const [activeTab,  setActiveTab]  = useState<ViewTab>('summary');
   const [expandedKam, setExpandedKam] = useState<string | null>(null);
@@ -260,6 +260,16 @@ export function Target() {
   const [exportWarn,       setExportWarn]       = useState(false);
   const [riskFilter,       setRiskFilter]       = useState<'all' | 'critical' | 'atrisk' | 'ontrack'>('all');
   const [showPeriodCols,   setShowPeriodCols]   = useState(false);
+
+  const autoMonthRef = useRef(false);
+  useEffect(() => {
+    if (!autoMonthRef.current && transactions.length > 0) {
+      autoMonthRef.current = true;
+      const months = [...new Set(transactions.map(t => t.date.slice(0, 7)))].sort().reverse();
+      const latest = months[0];
+      if (latest) { setSelMonth(latest); localStorage.setItem('target_selMonth', latest); }
+    }
+  }, [transactions]);
 
   const monthLabel     = getMonthOptions().find(o => o.value === selMonth)?.label ?? selMonth;
   const isCurrentMonth = selMonth === curMonth();

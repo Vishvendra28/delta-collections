@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTransactions } from '../context/TransactionsContext';
 import { useAuth } from '../context/AuthContext';
 import { useRecycleBin } from '../context/RecycleBinContext';
@@ -60,6 +60,14 @@ export function Transactions({ onNavigate: _onNavigate }: Props) {
     const set = new Set(transactions.map(t => t.date.slice(0, 7)));
     return [...set].sort().reverse();
   }, [transactions]);
+
+  const autoMonthRef = useRef(false);
+  useEffect(() => {
+    if (!autoMonthRef.current && availableMonths.length > 0) {
+      autoMonthRef.current = true;
+      setFilterMonth(availableMonths[0]);
+    }
+  }, [availableMonths]);
 
   const visible = useMemo(() => {
     let txs = transactions.filter(t => t.status !== 'excluded');
