@@ -285,38 +285,40 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
       {/* ── KPI CARDS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="card" style={{ display: 'flex', padding: 0, overflow: 'hidden' }}>
 
-        <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Total MTD Collection</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand)', wordBreak: 'break-word', lineHeight: 1.3 }}>{formatCrRounded(mtdTotal)}</div>
-          <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 5, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {/* Left: MTD Collection */}
+        <div style={{ flex: 1, padding: '14px 22px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Total MTD Collection</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--brand)', lineHeight: 1.15 }}>{formatCrRounded(mtdTotal)}</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span>{uniqueCustomers} customers · {filtered.length} txns</span>
             {momDelta !== null && (
-              <span style={{ fontWeight: 700, color: momDelta >= 0 ? 'var(--success)' : 'var(--danger)', fontSize: 12, background: momDelta >= 0 ? '#d1fae5' : '#fee2e2', padding: '1px 7px', borderRadius: 99 }}>
+              <span style={{ fontWeight: 700, color: momDelta >= 0 ? 'var(--success)' : 'var(--danger)', fontSize: 11, background: momDelta >= 0 ? '#d1fae5' : '#fee2e2', padding: '1px 7px', borderRadius: 99 }}>
                 {momDelta >= 0 ? '▲' : '▼'} {Math.abs(momDelta).toFixed(1)}% vs prev month
               </span>
             )}
           </div>
         </div>
 
-        <div className="card" onClick={() => onNavigate('target')}
-          style={{ padding: '18px 20px', cursor: 'pointer', transition: 'box-shadow 0.15s' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Right: Target vs Actual */}
+        <div onClick={() => onNavigate('target')}
+          style={{ flex: 1, padding: '14px 22px', cursor: 'pointer' }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text2)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Target vs Actual</span>
             <span style={{ fontSize: 10, color: 'var(--brand)', fontWeight: 600 }}>View Details ↗</span>
           </div>
           {targetTotal > 0 ? (
             <>
-              <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', flexWrap: 'wrap', marginBottom: 6 }}>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'baseline', marginBottom: 8 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase' }}>Target</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{formatCrRounded(targetTotal)}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Target</div>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{formatCrRounded(targetTotal)}</div>
                 </div>
-                <div style={{ width: 1, height: 30, background: 'var(--border)', flexShrink: 0 }} />
+                <div style={{ width: 1, height: 28, background: 'var(--border)', flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase' }}>Actual</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand)' }}>{formatCrRounded(mtdTotal)}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>Actual</div>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--brand)' }}>{formatCrRounded(mtdTotal)}</div>
                 </div>
               </div>
               {(() => {
@@ -325,11 +327,11 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                 const bg    = pct >= 80 ? '#d1fae5' : pct >= 50 ? '#fef3c7' : '#fee2e2';
                 return (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <span style={{ fontSize: 11, color: 'var(--text3)' }}>{monthLabel(targetMonth)}</span>
-                      <span style={{ fontSize: 14, fontWeight: 900, color, background: bg, padding: '1px 8px', borderRadius: 99 }}>{pct.toFixed(1)}%</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color, background: bg, padding: '1px 8px', borderRadius: 99 }}>{pct.toFixed(1)}%</span>
                     </div>
-                    <div style={{ height: 6, borderRadius: 99, background: 'var(--border)' }}>
+                    <div style={{ height: 5, borderRadius: 99, background: 'var(--border)' }}>
                       <div style={{ height: '100%', borderRadius: 99, background: color, width: `${Math.min(pct, 100)}%`, transition: 'width 0.4s' }} />
                     </div>
                   </div>
@@ -337,7 +339,7 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
               })()}
             </>
           ) : (
-            <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8 }}>No target uploaded for {monthLabel(targetMonth)}</div>
+            <div style={{ fontSize: 13, color: 'var(--text3)' }}>No target uploaded for {monthLabel(targetMonth)}</div>
           )}
         </div>
 
