@@ -154,11 +154,12 @@ router.delete('/:id', async (req, res) => {
 // DELETE /clear/by-bank-month — accepts query params (GET-style delete)
 router.delete('/clear/by-bank-month', async (req, res) => {
   try {
-    const { bank, month, company } = req.query;
+    const { bank, month, company, date } = req.query;
     if (!bank || !month) return res.status(400).json({ error: 'bank and month required' });
     let sql = `DELETE FROM transactions WHERE bank = $1 AND LEFT(date, 7) = $2`;
     const params = [bank, month];
     if (company) { params.push(company); sql += ` AND company = $${params.length}`; }
+    if (date)    { params.push(date);    sql += ` AND date = $${params.length}`; }
     await query(sql, params);
     res.json({ success: true });
   } catch (err) {

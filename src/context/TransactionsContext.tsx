@@ -30,7 +30,7 @@ interface TxCtx {
   loading: boolean;
   addTransactions: (txs: Transaction[]) => Promise<void>;
   replaceByBankMonth: (bank: string, months: string[], txs: Transaction[], company: string) => Promise<void>;
-  clearByBankMonth: (bank: string, month: string, company?: string) => Promise<void>;
+  clearByBankMonth: (bank: string, month: string, company?: string, date?: string) => Promise<void>;
   assignTransaction: (id: string, customer: string, kam: string, rh: string) => void;
   reassignTransaction: (id: string, customer: string, kam: string, rh: string) => void;
   bulkAssign: (ids: string[], customer: string, kam: string, rh: string) => void;
@@ -142,12 +142,13 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     });
   }
 
-  async function clearByBankMonth(bank: string, month: string, company?: string) {
-    await apiTransactions.clearByBankMonth(bank, month, company);
+  async function clearByBankMonth(bank: string, month: string, company?: string, date?: string) {
+    await apiTransactions.clearByBankMonth(bank, month, company, date);
     setTransactions(prev => prev.filter(t => !(
       t.bank === bank &&
       t.date.slice(0, 7) === month &&
-      (!company || t.company === company)
+      (!company || t.company === company) &&
+      (!date || t.date === date)
     )));
   }
 

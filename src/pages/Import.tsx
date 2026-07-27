@@ -179,6 +179,7 @@ export function Import() {
   const [clearBank, setClearBank]       = useState<Bank>('HDFC');
   const [clearMonth, setClearMonth]     = useState('');
   const [clearCompany, setClearCompany] = useState<Company | ''>('');
+  const [clearDate, setClearDate]       = useState('');
 
   // Bank accounts
   const [bankAccounts, setBankAccounts] = useState<Record<string, string>>(DEFAULT_BANK_ACCOUNTS);
@@ -240,6 +241,15 @@ export function Import() {
   const availableMonths = Array.from(
     new Set(transactions.filter(t => t.bank === clearBank && (!clearCompany || t.company === clearCompany)).map(t => t.date.slice(0, 7)))
   ).sort().reverse();
+
+  const availableDates = useMemo(() => {
+    if (!clearMonth) return [];
+    return [...new Set(
+      transactions
+        .filter(t => t.bank === clearBank && t.date.startsWith(clearMonth) && (!clearCompany || t.company === clearCompany))
+        .map(t => t.date)
+    )].sort();
+  }, [transactions, clearBank, clearMonth, clearCompany]);
 
   // ── Import Registry (derived from transactions) ───────────────────────────
   const importRegistry = useMemo(() => {
@@ -651,20 +661,20 @@ export function Import() {
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>BANK</label>
-            <select value={clearBank} onChange={e => { setClearBank(e.target.value as Bank); setClearMonth(''); }} style={{ minWidth: 140 }}>
+            <select value={clearBank} onChange={e => { setClearBank(e.target.value as Bank); setClearMonth(''); setClearDate(''); }} style={{ minWidth: 140 }}>
               {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
           </div>
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>COMPANY</label>
-            <select value={clearCompany} onChange={e => { setClearCompany(e.target.value as Company | ''); setClearMonth(''); }} style={{ minWidth: 130 }}>
+            <select value={clearCompany} onChange={e => { setClearCompany(e.target.value as Company | ''); setClearMonth(''); setClearDate(''); }} style={{ minWidth: 130 }}>
               <option value="">All Companies</option>
               {(['Zast', 'Transin'] as Company[]).map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>MONTH</label>
-            <select value={clearMonth} onChange={e => setClearMonth(e.target.value)} style={{ minWidth: 160 }}>
+            <select value={clearMonth} onChange={e => { setClearMonth(e.target.value); setClearDate(''); }} style={{ minWidth: 160 }}>
               <option value="">— Select month —</option>
               {availableMonths.map(m => {
                 const count = transactions.filter(t => t.bank === clearBank && t.date.slice(0, 7) === m && (!clearCompany || t.company === clearCompany)).length;
@@ -675,17 +685,36 @@ export function Import() {
               {availableMonths.length === 0 && <option disabled>No data for this bank{clearCompany ? ` / ${clearCompany}` : ''}</option>}
             </select>
           </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>
+              DATE <span style={{ fontWeight: 400, color: 'var(--text3)', fontSize: 11 }}>(optional)</span>
+            </label>
+            <select value={clearDate} onChange={e => setClearDate(e.target.value)} style={{ minWidth: 150 }} disabled={!clearMonth}>
+              <option value="">All dates in month</option>
+              {availableDates.map(d => {
+                const count = transactions.filter(t => t.bank === clearBank && t.date === d && (!clearCompany || t.company === clearCompany)).length;
+                return <option key={d} value={d}>{d} ({count} txns)</option>;
+              })}
+            </select>
+          </div>
           <button className="btn btn-danger" disabled={!clearMonth} onClick={() => {
             if (!clearMonth) return;
             const [yr, mo] = clearMonth.split('-');
-            const label = new Date(Number(yr), Number(mo) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
-            const count = transactions.filter(t => t.bank === clearBank && t.date.slice(0, 7) === clearMonth && (!clearCompany || t.company === clearCompany)).length;
+            const monthLabel = new Date(Number(yr), Number(mo) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+            const count = transactions.filter(t =>
+              t.bank === clearBank &&
+              t.date.slice(0, 7) === clearMonth &&
+              (!clearCompany || t.company === clearCompany) &&
+              (!clearDate || t.date === clearDate)
+            ).length;
             const companyLabel = clearCompany ? ` (${clearCompany})` : '';
-            if (window.confirm(`Remove all ${count} ${clearBank}${companyLabel} transactions for ${label}?`)) {
-              clearByBankMonth(clearBank, clearMonth, clearCompany || undefined);
+            const scopeLabel = clearDate ? ` on ${clearDate}` : ` for ${monthLabel}`;
+            if (window.confirm(`Remove ${count} ${clearBank}${companyLabel} transaction${count !== 1 ? 's' : ''}${scopeLabel}?`)) {
+              clearByBankMonth(clearBank, clearMonth, clearCompany || undefined, clearDate || undefined);
               setClearMonth('');
+              setClearDate('');
             }
-          }}>Clear Data</button>
+          }}>{clearDate ? `Clear ${clearDate}` : 'Clear Data'}</button>
         </div>
       </div>
 

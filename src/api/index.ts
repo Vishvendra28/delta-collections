@@ -134,9 +134,10 @@ export const apiTransactions = {
     masterBlank: { name: string; kam: string; rh: string; txn_count: string }[];
     fixedCount: number;
   }>('/transactions/kam-rh-diagnostic'),
-  clearByBankMonth: (bank: string, month: string, company?: string) => {
+  clearByBankMonth: (bank: string, month: string, company?: string, date?: string) => {
     const params: Record<string, string> = { bank, month };
     if (company) params.company = company;
+    if (date)    params.date    = date;
     return del<void>(`/transactions/clear/by-bank-month?${new URLSearchParams(params).toString()}`);
   },
 };
