@@ -693,7 +693,8 @@ export function Import() {
               <option value="">All dates in month</option>
               {availableDates.map(d => {
                 const count = transactions.filter(t => t.bank === clearBank && t.date === d && (!clearCompany || t.company === clearCompany)).length;
-                return <option key={d} value={d}>{d} ({count} txns)</option>;
+                const label = new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                return <option key={d} value={d}>{label} ({count} txns)</option>;
               })}
             </select>
           </div>
@@ -708,13 +709,14 @@ export function Import() {
               (!clearDate || t.date === clearDate)
             ).length;
             const companyLabel = clearCompany ? ` (${clearCompany})` : '';
-            const scopeLabel = clearDate ? ` on ${clearDate}` : ` for ${monthLabel}`;
+            const clearDateLabel = clearDate ? new Date(clearDate + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '';
+            const scopeLabel = clearDate ? ` on ${clearDateLabel}` : ` for ${monthLabel}`;
             if (window.confirm(`Remove ${count} ${clearBank}${companyLabel} transaction${count !== 1 ? 's' : ''}${scopeLabel}?`)) {
               clearByBankMonth(clearBank, clearMonth, clearCompany || undefined, clearDate || undefined);
               setClearMonth('');
               setClearDate('');
             }
-          }}>{clearDate ? `Clear ${clearDate}` : 'Clear Data'}</button>
+          }}>{clearDate ? `Clear ${new Date(clearDate + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : 'Clear Data'}</button>
         </div>
       </div>
 
