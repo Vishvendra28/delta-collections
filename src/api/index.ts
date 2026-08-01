@@ -210,6 +210,8 @@ export const apiSettings = {
 };
 
 // ---- Auth API ----
+type AuthUserPayload = { token: string; user: { id: string; name: string; email: string; role: string; kam_name?: string; rh_name?: string } };
+
 export const apiAuth = {
   login: (email: string, password: string) =>
     fetch(`${BASE}/auth/login`, {
@@ -219,8 +221,29 @@ export const apiAuth = {
     }).then(async res => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
-      return data as { token: string; user: { id: string; name: string; email: string; role: string; kam_name?: string; rh_name?: string } };
+      return data as AuthUserPayload;
     }),
+
+  // No password required — issues JWT for a non-admin user by id
+  selectUser: (userId: string) =>
+    fetch(`${BASE}/auth/select-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    }).then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to select user');
+      return data as AuthUserPayload;
+    }),
+
+  // Public — no auth needed; returns non-admin users for the name picker
+  getPublicUsers: () =>
+    fetch(`${BASE}/auth/users`).then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load users');
+      return data as { id: string; name: string; role: string; kam_name?: string; rh_name?: string }[];
+    }),
+
   changePassword: (userId: string, currentPassword: string, newPassword: string) =>
     req<{ success: boolean }>('POST', '/auth/change-password', { userId, currentPassword, newPassword }),
 };

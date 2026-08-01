@@ -1,30 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import type { Role } from '../context/AuthContext';
+import { apiAuth } from '../api';
 
-const ROLES: { role: Role; label: string; color: string }[] = [
-  { role: 'admin',  label: 'Admin',  color: '#dc2626' },
-  { role: 'rh',     label: 'RH',     color: '#d97706' },
-  { role: 'kam',    label: 'KAM',    color: '#2563eb' },
-  { role: 'arpm',   label: 'ARPM',   color: '#7c3aed' },
-];
+type PublicUser = { id: string; name: string; role: string; kam_name?: string; rh_name?: string };
+
+const ROLE_COLORS: Record<string, string> = {
+  rh:   '#d97706',
+  kam:  '#2563eb',
+  arpm: '#7c3aed',
+};
 
 export function Login() {
-  const { login } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('Delta@123');
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
+  const { login, loginAsUser } = useAuth();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    const result = await login(email, password);
-    setLoading(false);
-    if (!result.success) setError(result.error || 'Login failed.');
+  const [users, setUsers]               = useState<PublicUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [selectedId, setSelectedId]     = useState('');
+  const [enterLoading, setEnterLoading] = useState(false);
+  const [enterError, setEnterError]     = useState('');
+
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminEmail, setAdminEmail]         = useState('');
+  const [adminPassword, setAdminPassword]   = useState('Delta@123');
+  const [adminLoading, setAdminLoading]     = useState(false);
+  const [adminError, setAdminError]         = useState('');
+
+  useEffect(() => {
+    apiAuth.getPublicUsers()
+      .then(list => setUsers(list))
+      .catch(() => setEnterError('Could not load users. Is the server running?'))
+      .finally(() => setLoadingUsers(false));
+  }, []);
+
+  async function handleEnter() {
+    if (!selectedId) return;
+    setEnterLoading(true);
+    setEnterError('');
+    const result = await loginAsUser(selectedId);
+    setEnterLoading(false);
+    if (!result.success) setEnterError(result.error || 'Failed to enter app');
   }
+
+  async function handleAdminLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setAdminLoading(true);
+    setAdminError('');
+    const result = await login(adminEmail, adminPassword);
+    setAdminLoading(false);
+    if (!result.success) setAdminError(result.error || 'Login failed');
+  }
+
+  const selectedUser = users.find(u => u.id === selectedId);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -39,88 +65,120 @@ export function Login() {
 
         <div className="card" style={{ padding: 28 }}>
 
-          {/* Role selection */}
-          <div style={{ marginBottom: 22 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 10 }}>I AM LOGGING IN AS</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-              {ROLES.map(({ role, label, color }) => {
-                const active = selectedRole === role;
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => { setSelectedRole(role); setError(''); }}
-                    style={{
-                      padding: '10px 6px',
-                      borderRadius: 10,
-                      border: `2px solid ${active ? color : 'var(--border)'}`,
-                      background: active ? color : 'var(--surface2)',
-                      color: active ? '#fff' : 'var(--text)',
-                      cursor: 'pointer',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            {selectedRole && (
-              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
-                Signing in as <strong style={{ color: 'var(--text)' }}>{selectedRole.toUpperCase()}</strong>
-              </div>
-            )}
-          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 10 }}>SELECT YOUR NAME TO CONTINUE</div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }}>YOUR ONMOVE EMAIL</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="yourname@onmove.in"
-                style={{ width: '100%' }}
-                required
-                autoFocus
-              />
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }}>PASSWORD</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                style={{ width: '100%' }}
-                required
-              />
-              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>Default password is pre-filled — change it after first login</div>
-            </div>
-
-            {error && <div style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 12 }}>{error}</div>}
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%', justifyContent: 'center', padding: '10px 0', opacity: !selectedRole ? 0.6 : 1 }}
-              disabled={loading || !selectedRole}
+          {loadingUsers ? (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 13 }}>Loading users...</div>
+          ) : (
+            <select
+              value={selectedId}
+              onChange={e => { setSelectedId(e.target.value); setEnterError(''); }}
+              style={{ width: '100%', padding: '10px 12px', fontSize: 14, marginBottom: 16, cursor: 'pointer' }}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
+              <option value="">— Choose your name —</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.role.toUpperCase()})
+                </option>
+              ))}
+            </select>
+          )}
 
-          <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', marginBottom: 6 }}>NEED ACCESS?</div>
-            <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6 }}>
-              Contact your admin to get your Onmove email registered in the system. Once registered, use your company email and the default password above.
+          {selectedUser && (
+            <div style={{ marginBottom: 14, padding: '8px 12px', background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ width: 32, height: 32, borderRadius: '50%', background: ROLE_COLORS[selectedUser.role] ?? '#64748b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+                {selectedUser.name.charAt(0)}
+              </span>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>{selectedUser.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--text2)' }}>{selectedUser.role.toUpperCase()}{selectedUser.kam_name ? ` · ${selectedUser.kam_name}` : ''}</div>
+              </div>
             </div>
+          )}
+
+          {enterError && <div style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 10 }}>{enterError}</div>}
+
+          <button
+            className="btn btn-primary"
+            style={{ width: '100%', justifyContent: 'center', padding: '10px 0', opacity: !selectedId ? 0.5 : 1 }}
+            disabled={!selectedId || enterLoading}
+            onClick={handleEnter}
+          >
+            {enterLoading ? 'Entering...' : 'Enter App'}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            <span style={{ fontSize: 12, color: 'var(--text3)', flexShrink: 0 }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           </div>
+
+          <button
+            className="btn btn-secondary"
+            style={{ width: '100%', justifyContent: 'center', padding: '10px 0' }}
+            onClick={() => { setShowAdminModal(true); setAdminError(''); }}
+          >
+            Admin Login
+          </button>
 
         </div>
       </div>
+
+      {/* Admin Login Modal */}
+      {showAdminModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAdminModal(false); }}
+        >
+          <div className="card" style={{ width: '100%', maxWidth: 380, padding: 28, position: 'relative' }}>
+            <button
+              onClick={() => setShowAdminModal(false)}
+              style={{ position: 'absolute', top: 12, right: 14, background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--text2)' }}
+            >
+              ×
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
+              <div style={{ width: 36, height: 36, background: '#dc2626', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>A</div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>Admin Login</div>
+                <div style={{ fontSize: 12, color: 'var(--text2)' }}>Full access — changes require credentials</div>
+              </div>
+            </div>
+
+            <form onSubmit={handleAdminLogin}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }}>EMAIL</label>
+                <input
+                  type="email"
+                  value={adminEmail}
+                  onChange={e => setAdminEmail(e.target.value)}
+                  placeholder="admin@onmove.in"
+                  style={{ width: '100%' }}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }}>PASSWORD</label>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={e => setAdminPassword(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              {adminError && <div style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 12 }}>{adminError}</div>}
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '10px 0', background: '#dc2626', borderColor: '#dc2626' }} disabled={adminLoading}>
+                {adminLoading ? 'Signing in...' : 'Sign In as Admin'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

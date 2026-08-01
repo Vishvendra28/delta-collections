@@ -46,6 +46,46 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Public — returns non-admin users for the name picker (no JWT required)
+router.get('/users', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT id, name, role, kam_name, rh_name FROM users WHERE role != 'admin' AND active = true ORDER BY name`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load users' });
+  }
+});
+
+// Public — issues a JWT for a non-admin user without requiring a password
+router.post('/select-user', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const result = await query(
+      `SELECT id, name, email, role, kam_name, rh_name FROM users WHERE id = $1 AND active = true`,
+      [userId]
+    );
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Admin must use password login' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, kam_name: user.kam_name, rh_name: user.rh_name },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to select user' });
+  }
+});
+
 router.post('/change-password', async (req, res) => {
   try {
     const { userId, currentPassword, newPassword } = req.body;

@@ -16,6 +16,7 @@ interface AuthCtx {
   user: User | null;
   allUsers: User[];
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginAsUser: (userId: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   demoUsers: User[];
 }
@@ -47,11 +48,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const loggedInUser = dbToUser(data.user);
       setUser(loggedInUser);
       localStorage.setItem('delta_user', JSON.stringify(loggedInUser));
-      // Load all users now that we have a valid token
       apiUsers.getAll().then(users => setAllUsers(users.map(dbToUser))).catch(() => {});
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Login failed' };
+    }
+  }
+
+  async function loginAsUser(userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const data = await apiAuth.selectUser(userId);
+      setToken(data.token);
+      const loggedInUser = dbToUser(data.user);
+      setUser(loggedInUser);
+      localStorage.setItem('delta_user', JSON.stringify(loggedInUser));
+      apiUsers.getAll().then(users => setAllUsers(users.map(dbToUser))).catch(() => {});
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Select user failed' };
     }
   }
 
@@ -62,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, allUsers, login, logout, demoUsers: allUsers }}>
+    <AuthContext.Provider value={{ user, allUsers, login, loginAsUser, logout, demoUsers: allUsers }}>
       {children}
     </AuthContext.Provider>
   );
