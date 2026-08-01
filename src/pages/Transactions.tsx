@@ -72,7 +72,7 @@ export function Transactions({ onNavigate: _onNavigate }: Props) {
   const visible = useMemo(() => {
     let txs = transactions.filter(t => t.status !== 'excluded');
     if (user?.role === 'kam') txs = txs.filter(t => t.kam === user.kamName);
-    if (user?.role === 'rh' || user?.role === 'arpm')  txs = txs.filter(t => t.rh  === user.rhName);
+    if (user?.role === 'rh' || user?.role === 'arpm') txs = txs.filter(t => t.rh === user.rhName);
     if (filterMonth)    txs = txs.filter(t => t.date.startsWith(filterMonth));
     if (filterKAM)      txs = txs.filter(t => t.kam === filterKAM);
     if (filterCompany)  txs = txs.filter(t => t.company === filterCompany);
@@ -188,7 +188,7 @@ export function Transactions({ onNavigate: _onNavigate }: Props) {
             </select>
           </div>
 
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || user?.role === 'founder') && (
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>KAM</div>
               <select value={filterKAM} onChange={e => setFilterKAM(e.target.value)} style={{ minWidth: 110 }}>

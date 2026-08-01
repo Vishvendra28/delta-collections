@@ -38,6 +38,8 @@ const USERS = [
   { id: 'U009', name: 'Kamal', email: 'kamal@delta.in', role: 'kam', kam_name: 'Kamal', rh_name: null },
   { id: 'U010', name: 'Deepak', email: 'deepak@delta.in', role: 'kam', kam_name: 'Deepak', rh_name: null },
   { id: 'U011', name: 'Kunal', email: 'kunal@delta.in', role: 'kam', kam_name: 'Kunal', rh_name: null },
+  { id: 'U012', name: 'Parvinder', email: 'parvinder@delta.in', role: 'founder', kam_name: null, rh_name: null },
+  { id: 'U013', name: 'Praveen', email: 'praveen@delta.in', role: 'founder', kam_name: null, rh_name: null },
 ];
 
 const CUSTOMERS = [
@@ -309,6 +311,21 @@ const RULES = [
   { id: 'R-138', customer: 'HECTOR BEVERAGES (P) LTD', keywords: ['HECTOR BEVERAGES', 'HECTOR BEV'], compound_rules: [], exclude_keywords: [], note: 'Alternate name for Hector Beverages Pvt Ltd (R-136)', source: 'system', created_at: '2026-07-22' },
   { id: 'R-139', customer: 'Modenik Lifestyle Private Limited', keywords: ['MODENIK'], compound_rules: [], exclude_keywords: [], note: null, source: 'system', created_at: '2026-07-22' },
 ];
+
+export async function ensureFounders() {
+  const placeholder = await bcrypt.hash('unused', 10);
+  await query(`
+    INSERT INTO users (id, name, email, role, active, password_hash)
+    VALUES ('U012', 'Parvinder', 'parvinder@delta.in', 'founder', true, $1)
+    ON CONFLICT (id) DO NOTHING
+  `, [placeholder]);
+  await query(`
+    INSERT INTO users (id, name, email, role, active, password_hash)
+    VALUES ('U013', 'Praveen', 'praveen@delta.in', 'founder', true, $1)
+    ON CONFLICT (id) DO NOTHING
+  `, [placeholder]);
+  console.log('Founder accounts ensured.');
+}
 
 export async function ensureAdmin() {
   const defaultHash = await bcrypt.hash('Delta@123', 10);

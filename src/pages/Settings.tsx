@@ -25,7 +25,9 @@ export function Settings() {
     apiUsers.getAll().then(us => setUsers(us)).catch(() => {});
   }, []);
 
-  if (user?.role !== 'admin') {
+  const canEdit = user?.role === 'admin';
+
+  if (!canEdit && user?.role !== 'founder') {
     return (
       <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text3)' }}>
         Settings are only accessible to Admin users.
@@ -144,9 +146,11 @@ export function Settings() {
         </div>
       </div>
 
-      <div>
-        <button className="btn btn-primary" onClick={save}>{saved ? '✓ Saved' : 'Save Settings'}</button>
-      </div>
+      {canEdit && (
+        <div>
+          <button className="btn btn-primary" onClick={save}>{saved ? '✓ Saved' : 'Save Settings'}</button>
+        </div>
+      )}
 
       {/* Advise file storage notice */}
       <div style={{ padding: '14px 18px', background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 10, fontSize: 13, color: '#92400e', lineHeight: 1.6 }}>
@@ -174,7 +178,7 @@ export function Settings() {
       <div className="card" style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 14, fontWeight: 700 }}>User Management</h3>
-          <button className="btn btn-primary" style={{ fontSize: 13 }} onClick={() => setShowAddUser(true)}>+ Add User</button>
+          {canEdit && <button className="btn btn-primary" style={{ fontSize: 13 }} onClick={() => setShowAddUser(true)}>+ Add User</button>}
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table>
@@ -193,22 +197,24 @@ export function Settings() {
                 <tr key={u.id}>
                   <td style={{ fontWeight: 600, fontSize: 13 }}>{u.name}</td>
                   <td style={{ fontSize: 12, color: 'var(--text2)' }}>{u.email}</td>
-                  <td><span className={`badge badge-${u.role === 'admin' ? 'red' : (u.role === 'rh' || u.role === 'arpm') ? 'yellow' : 'green'}`}>{u.role}</span></td>
+                  <td><span className={`badge badge-${u.role === 'admin' ? 'red' : u.role === 'founder' ? 'blue' : (u.role === 'rh' || u.role === 'arpm') ? 'yellow' : 'green'}`}>{u.role}</span></td>
                   <td style={{ fontSize: 12 }}>{u.kam_name || u.rh_name || '—'}</td>
                   <td>
                     <span className={`badge badge-${u.active !== false ? 'green' : 'gray'}`}>{u.active !== false ? 'Active' : 'Inactive'}</span>
                   </td>
-                  <td style={{ display: 'flex', gap: 6 }}>
-                    <button className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11 }}
-                      onClick={() => { setEditUserId(u.id); setNewUser({ ...u }); }}>
-                      Edit
-                    </button>
-                    <button className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11, color: 'var(--danger)' }}
-                      onClick={() => setDeleteUserId(u.id)}
-                      disabled={u.id === user?.id}>
-                      Delete
-                    </button>
-                  </td>
+                  {canEdit && (
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11 }}
+                        onClick={() => { setEditUserId(u.id); setNewUser({ ...u }); }}>
+                        Edit
+                      </button>
+                      <button className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: 11, color: 'var(--danger)' }}
+                        onClick={() => setDeleteUserId(u.id)}
+                        disabled={u.id === user?.id}>
+                        Delete
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {users.length === 0 && (

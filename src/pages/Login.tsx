@@ -5,9 +5,10 @@ import { apiAuth } from '../api';
 type PublicUser = { id: string; name: string; role: string; kam_name?: string; rh_name?: string };
 
 const ROLE_COLORS: Record<string, string> = {
-  rh:   '#d97706',
-  kam:  '#2563eb',
-  arpm: '#7c3aed',
+  rh:      '#d97706',
+  kam:     '#2563eb',
+  arpm:    '#7c3aed',
+  founder: '#0891b2',
 };
 
 export function Login() {

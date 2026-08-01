@@ -212,9 +212,11 @@ export function Target() {
   const kamUsers    = demoUsers.filter(u => u.role === 'kam' && u.kamName);
   const allKamNames = kamUsers.map(u => u.kamName!);
 
-  const isAdmin = user?.role === 'admin';
-  const isRH    = user?.role === 'rh' || user?.role === 'arpm';
-  const isKAM   = user?.role === 'kam';
+  const isAdmin   = user?.role === 'admin';
+  const isFounder = user?.role === 'founder';
+  const isRH      = user?.role === 'rh' || user?.role === 'arpm';
+  const isKAM     = user?.role === 'kam';
+  const isAdminView = isAdmin || isFounder;
   const myKam   = isKAM ? user.kamName ?? '' : '';
 
   // ─── State ─────────────────────────────────────────────────────────────────
@@ -476,21 +478,21 @@ export function Target() {
 
     // Header — exactly mirrors the table columns
     const header: string[] = ['Customer'];
-    if (isAdmin || isRH) header.push('KAM');
+    if (isAdminView || isRH) header.push('KAM');
     if (showPeriodCols) for (const pl of pLabels) { header.push(`Target (${pl})`); header.push(`Actual (${pl})`); header.push(`% (${pl})`); }
     header.push('Target (Total)', 'Actual (Total)', 'Shortfall', 'Shortfall %', 'Status');
 
     const out: unknown[][] = [header];
     for (const r of sorted) {
       const row: unknown[] = [r.customer];
-      if (isAdmin || isRH) row.push(r.kamName);
+      if (isAdminView || isRH) row.push(r.kamName);
       if (showPeriodCols) for (const ps of r.periodStats) { row.push(ps.target, ps.actual, `${ps.pct.toFixed(1)}%`); }
       row.push(r.target, r.actual, r.shortfall, `${r.shortfallPct.toFixed(1)}%`, statusLabel(r.achievePct));
       out.push(row);
     }
     // Grand total row
     const totRow: unknown[] = ['Grand Total'];
-    if (isAdmin || isRH) totRow.push('');
+    if (isAdminView || isRH) totRow.push('');
     if (showPeriodCols) for (let gi = 0; gi < pLabels.length; gi++) {
       const gt = sorted.reduce((a, r) => a + r.periodStats[gi].target, 0);
       const ga = sorted.reduce((a, r) => a + r.periodStats[gi].actual, 0);
@@ -966,7 +968,7 @@ export function Target() {
           {showPeriodCols && renderPeriodToggle()}
 
           {/* KAM filter */}
-          {(isAdmin || isRH) && (
+          {(isAdminView || isRH) && (
             <select value={summaryKamFilter} onChange={e => setSummaryKamFilter(e.target.value)}
               style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 12 }}>
               <option value="">All KAMs</option>
@@ -991,7 +993,7 @@ export function Target() {
                   Customer <SortBtn col="customer" />
                 </th>
                 {/* KAM */}
-                {(isAdmin || isRH) && (
+                {(isAdminView || isRH) && (
                   <th onClick={() => sortSummary('kamName')} style={{ ...TH({ textAlign: 'left', cursor: 'pointer' }) }}>
                     KAM <SortBtn col="kamName" />
                   </th>
@@ -1034,7 +1036,7 @@ export function Target() {
               {sorted.map((r, i) => (
                 <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--bg)' }}>
                   <td style={{ ...TD({ fontWeight: 600, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }), textAlign: 'left' }} title={r.customer}>{r.customer}</td>
-                  {(isAdmin || isRH) && <td style={{ ...TD({ color: 'var(--text2)', fontSize: 12, whiteSpace: 'nowrap' }), textAlign: 'left' }}>{r.kamName}</td>}
+                  {(isAdminView || isRH) && <td style={{ ...TD({ color: 'var(--text2)', fontSize: 12, whiteSpace: 'nowrap' }), textAlign: 'left' }}>{r.kamName}</td>}
 
                   {showPeriodCols && r.periodStats.map((ps, gi) => (
                     <React.Fragment key={gi}>
@@ -1061,7 +1063,7 @@ export function Target() {
             <tfoot>
               <tr style={{ background: 'var(--bg)', borderTop: '3px solid var(--border)' }}>
                 <td style={{ ...TD({ fontWeight: 800, borderBottom: 'none' }), textAlign: 'left' }}>Grand Total</td>
-                {(isAdmin || isRH) && <td style={{ ...TD({ borderBottom: 'none' }) }} />}
+                {(isAdminView || isRH) && <td style={{ ...TD({ borderBottom: 'none' }) }} />}
                 {showPeriodCols && pLabels.map((_, gi) => (
                   <React.Fragment key={gi}>
                     <td style={{ ...TD({ background: '#eff6ff33', borderLeft: '2px solid #bfdbfe', borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: '#1d4ed8' }}>{fmtL(gtPeriodTargets[gi])}</td>
@@ -1094,7 +1096,7 @@ export function Target() {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {(isAdmin || isRH) && (
+        {(isAdminView || isRH) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontWeight: 600, fontSize: 14 }}>Select KAM:</span>
             <select value={kamViewKam} onChange={e => setKamViewKam(e.target.value)}
@@ -1584,7 +1586,7 @@ export function Target() {
     { id: 'summary',     label: 'Summary Table', show: true },
     { id: 'performance', label: 'Performance',   show: true },
     { id: 'kamview',     label: 'KAM View',      show: true },
-    { id: 'risk',        label: 'Risk View',      show: isAdmin || isRH },
+    { id: 'risk',        label: 'Risk View',      show: isAdminView || isRH },
   ];
 
   return (
@@ -1597,7 +1599,7 @@ export function Target() {
           {getMonthOptions().map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
 
-        {(isAdmin || isRH) && (
+        {(isAdminView || isRH) && (
           <select value={selKam} onChange={e => { setSelKam(e.target.value); setExpandedKam(null); }}
             style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14, cursor: 'pointer' }}>
             <option value="all">All KAMs</option>
@@ -1641,7 +1643,7 @@ export function Target() {
       )}
       {activeTab === 'summary'  && renderSummaryTable()}
       {activeTab === 'kamview'  && renderKamView()}
-      {activeTab === 'risk'     && (isAdmin || isRH) && renderRiskView()}
+      {activeTab === 'risk'     && (isAdminView || isRH) && renderRiskView()}
 
       {/* Shortfall panels */}
       {shortfallPanel  && renderShortfallPanel()}

@@ -19,7 +19,7 @@ router.post('/', requireRole('admin'), async (req, res) => {
   const { ok, errors } = validate(req.body, {
     name:  { required: true, type: 'string', maxLength: 100 },
     email: { required: true, type: 'string', match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    role:  { required: true, oneOf: ['admin', 'rh', 'kam'] },
+    role:  { required: true, oneOf: ['admin', 'rh', 'kam', 'arpm', 'founder'] },
   });
   if (!ok) return res.status(400).json({ error: errors.join('; ') });
   try {
@@ -45,7 +45,7 @@ router.put('/:id', requireRole('admin'), async (req, res) => {
   const { ok, errors } = validate(req.body, {
     name:  { required: true, type: 'string', maxLength: 100 },
     email: { required: true, type: 'string', match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    role:  { required: true, oneOf: ['admin', 'rh', 'kam'] },
+    role:  { required: true, oneOf: ['admin', 'rh', 'kam', 'arpm', 'founder'] },
   });
   if (!ok) return res.status(400).json({ error: errors.join('; ') });
   try {

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 import { createTables } from './schema.js';
-import { seedDatabase, ensureAdmin } from './seed.js';
+import { seedDatabase, ensureAdmin, ensureFounders } from './seed.js';
 import authRouter from './routes/auth.js';
 import { requireAuth } from './middleware/auth.js';
 import rulesRouter from './routes/rules.js';
@@ -67,6 +67,7 @@ async function start() {
     await createTables();
     await seedDatabase();
     await ensureAdmin();
+    await ensureFounders();
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

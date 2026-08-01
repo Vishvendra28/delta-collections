@@ -34,7 +34,7 @@ export function Sidebar({ current, onNavigate, collapsed, onToggle }: Props) {
   const binCount = binItems.length;
 
   const visibleItems = NAV_ITEMS.filter(item => {
-    if (item.adminOnly && user?.role !== 'admin') return false;
+    if (item.adminOnly && user?.role !== 'admin' && user?.role !== 'founder') return false;
     return true;
   });
 
