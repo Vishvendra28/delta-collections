@@ -21,7 +21,7 @@ export function Login() {
 
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminEmail, setAdminEmail]         = useState('');
-  const [adminPassword, setAdminPassword]   = useState('Delta@123');
+  const [adminPassword, setAdminPassword]   = useState('');
   const [adminLoading, setAdminLoading]     = useState(false);
   const [adminError, setAdminError]         = useState('');
 
