@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query, withTransaction, logAudit } from '../db.js';
+import { requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -33,15 +34,14 @@ router.get('/available', async (req, res) => {
   res.json(result.rows);
 });
 
-// Upload / replace target for a KAM + month
-router.post('/upload', async (req, res) => {
+// Upload / replace target for a KAM + month — admin only
+router.post('/upload', requireRole('admin'), async (req, res) => {
   const { kam_name, month_year, rows, uploaded_by, file_base64 } = req.body;
   if (!kam_name || !month_year || !rows || !uploaded_by) {
     return res.status(400).json({ error: 'kam_name, month_year, rows, uploaded_by required' });
   }
   const uploaded_at = new Date().toISOString();
 
-  // Use a real DB transaction — delete old and insert new atomically
   await withTransaction(async (client) => {
     await client.query(`DELETE FROM targets WHERE kam_name=$1 AND month_year=$2`, [kam_name, month_year]);
     for (const row of rows) {
@@ -64,8 +64,8 @@ router.post('/upload', async (req, res) => {
   res.json({ success: true, count: rows.length });
 });
 
-// Delete target for a KAM + month
-router.delete('/', async (req, res) => {
+// Delete target for a KAM + month — admin only
+router.delete('/', requireRole('admin'), async (req, res) => {
   const { kam, month } = req.query;
   if (!kam || !month) return res.status(400).json({ error: 'kam and month required' });
   await query(`DELETE FROM targets WHERE kam_name=$1 AND month_year=$2`, [kam, month]);

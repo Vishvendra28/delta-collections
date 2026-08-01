@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /bulk — accepts snake_case array; uses a real DB transaction via withTransaction
-router.post('/bulk', async (req, res) => {
+router.post('/bulk', requireRole('admin'), async (req, res) => {
   try {
     const txs = req.body;
     if (!Array.isArray(txs) || txs.length === 0) return res.json({ success: true, imported: 0 });
@@ -142,7 +142,7 @@ router.patch('/:id', async (req, res) => {
 });
 
 // DELETE single transaction
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole('admin'), async (req, res) => {
   try {
     await query('DELETE FROM transactions WHERE id = $1', [req.params.id]);
     res.json({ success: true });
@@ -152,7 +152,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // DELETE /clear/by-bank-month — accepts query params (GET-style delete)
-router.delete('/clear/by-bank-month', async (req, res) => {
+router.delete('/clear/by-bank-month', requireRole('admin'), async (req, res) => {
   try {
     const { bank, month, company, date } = req.query;
     if (!bank || !month) return res.status(400).json({ error: 'bank and month required' });
@@ -193,7 +193,7 @@ function toApi(row) {
 }
 
 // Fix blank KAM/RH for matched transactions by joining against customers table
-router.post('/fix-kam-rh', async (req, res) => {
+router.post('/fix-kam-rh', requireRole('admin'), async (req, res) => {
   const result = await query(`
     UPDATE transactions t
     SET

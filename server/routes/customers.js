@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { validate } from '../middleware/validate.js';
+import { requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.put('/bulk', async (req, res) => {
+router.put('/bulk', requireRole('admin'), async (req, res) => {
   try {
     const customers = req.body;
     await query('BEGIN');
@@ -39,7 +40,7 @@ router.put('/bulk', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole('admin'), async (req, res) => {
   const { ok, errors } = validate(req.body, {
     name: { required: true, type: 'string', maxLength: 200 },
   });
@@ -58,7 +59,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole('admin'), async (req, res) => {
   try {
     await query('DELETE FROM customers WHERE id = $1', [req.params.id]);
     res.json({ success: true });

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
+import { requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ router.get('/', async (req, res) => {
   res.json(result.rows);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole('admin'), async (req, res) => {
   const { bin_id, type, payload, deleted_at, deleted_by, reason } = req.body;
   await query(
     `INSERT INTO recycle_bin (bin_id, type, payload, deleted_at, deleted_by, reason) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (bin_id) DO NOTHING`,
@@ -17,12 +18,12 @@ router.post('/', async (req, res) => {
   res.json({ success: true });
 });
 
-router.delete('/clear', async (req, res) => {
+router.delete('/clear', requireRole('admin'), async (req, res) => {
   await query(`DELETE FROM recycle_bin`);
   res.json({ success: true });
 });
 
-router.delete('/:binId', async (req, res) => {
+router.delete('/:binId', requireRole('admin'), async (req, res) => {
   await query(`DELETE FROM recycle_bin WHERE bin_id=$1`, [req.params.binId]);
   res.json({ success: true });
 });

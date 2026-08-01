@@ -30,7 +30,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'"],
+      styleSrc:    ["'self'", "https://cdn.jsdelivr.net"],
+      fontSrc:     ["'self'", "https://cdn.jsdelivr.net"],
+      imgSrc:      ["'self'", "data:"],
+      connectSrc:  ["'self'"],
+    },
+  },
+}));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db.js';
+import { requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST create rule — accepts snake_case
-router.post('/', async (req, res) => {
+router.post('/', requireRole('admin'), async (req, res) => {
   try {
     const r = req.body;
     const id = r.id;
@@ -56,7 +57,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT bulk replace — accepts snake_case
-router.put('/bulk', async (req, res) => {
+router.put('/bulk', requireRole('admin'), async (req, res) => {
   try {
     const rules = req.body;
     await query('BEGIN');
@@ -82,7 +83,7 @@ router.put('/bulk', async (req, res) => {
 });
 
 // PUT update single rule by ID — safe: only touches one row, never deletes others
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireRole('admin'), async (req, res) => {
   try {
     const r = req.body;
     const compoundRules = r.compound_rules ?? r.compoundRules ?? [];
@@ -107,7 +108,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE rule
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole('admin'), async (req, res) => {
   try {
     await query('DELETE FROM rules WHERE id = $1', [req.params.id]);
     res.json({ success: true });
