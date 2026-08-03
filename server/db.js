@@ -4,9 +4,16 @@ dotenv.config();
 
 const { Pool } = pg;
 
+const sslConfig = () => {
+  if (process.env.DB_SSL === 'false') return false;
+  if (process.env.DB_SSL === 'true') return { rejectUnauthorized: false };
+  // fallback: use SSL in production (Neon) but not for local/internal DBs
+  return process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false;
+};
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: sslConfig(),
 });
 
 pool.on('error', (err) => {
