@@ -14,6 +14,7 @@ export function Settings() {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState<Partial<DbUser> & { password?: string }>({ role: 'kam', active: true });
   const [userSaving, setUserSaving] = useState(false);
+  const [editPassword, setEditPassword] = useState('');
   const [backupBusy, setBackupBusy] = useState(false);
 
   useEffect(() => {
@@ -48,9 +49,12 @@ export function Settings() {
 
   async function handleUpdateUser(id: string, updates: Partial<DbUser>) {
     try {
-      const updated = await apiUsers.update(id, updates);
+      const payload: Partial<DbUser> & { password?: string } = { ...updates };
+      if (editPassword.trim()) payload.password = editPassword.trim();
+      const updated = await apiUsers.update(id, payload);
       setUsers(prev => prev.map(u => u.id === id ? updated : u));
       setEditUserId(null);
+      setEditPassword('');
     } catch { /* noop */ }
   }
 
@@ -227,7 +231,7 @@ export function Settings() {
 
       {/* Add/Edit User Modal */}
       {(showAddUser || editUserId) && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowAddUser(false); setEditUserId(null); setNewUser({ role: 'kam', active: true }); } }}>
+        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowAddUser(false); setEditUserId(null); setNewUser({ role: 'kam', active: true }); setEditPassword(''); } }}>
           <div className="card" style={{ padding: 28, width: 440 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>{editUserId ? 'Edit User' : 'Add New User'}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -243,7 +247,7 @@ export function Settings() {
                     style={{ width: '100%' }} />
                 </div>
               ))}
-              {!editUserId && (
+              {!editUserId ? (
                 <div>
                   <div className="filter-label">Password</div>
                   <input type="password" placeholder="Set initial password"
@@ -251,13 +255,23 @@ export function Settings() {
                     onChange={e => setNewUser(prev => ({ ...prev, password: e.target.value }))}
                     style={{ width: '100%' }} />
                 </div>
+              ) : (
+                <div>
+                  <div className="filter-label">New Password <span style={{ fontWeight: 400, color: 'var(--text3)' }}>(leave blank to keep current)</span></div>
+                  <input type="password" placeholder="Enter new password to reset"
+                    value={editPassword}
+                    onChange={e => setEditPassword(e.target.value)}
+                    style={{ width: '100%' }} />
+                </div>
               )}
               <div>
                 <div className="filter-label">Role</div>
                 <select value={newUser.role || 'kam'} onChange={e => setNewUser(prev => ({ ...prev, role: e.target.value }))} style={{ width: '100%' }}>
                   <option value="admin">Admin</option>
+                  <option value="founder">Founder</option>
                   <option value="rh">Regional Head</option>
                   <option value="kam">KAM</option>
+                  <option value="arpm">ARPM</option>
                 </select>
               </div>
               <div>
@@ -274,7 +288,7 @@ export function Settings() {
               )}
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
-              <button className="btn btn-secondary" onClick={() => { setShowAddUser(false); setEditUserId(null); setNewUser({ role: 'kam', active: true }); }}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setShowAddUser(false); setEditUserId(null); setNewUser({ role: 'kam', active: true }); setEditPassword(''); }}>Cancel</button>
               <button className="btn btn-primary" disabled={userSaving}
                 onClick={() => editUserId ? handleUpdateUser(editUserId, newUser as DbUser) : handleAddUser()}>
                 {userSaving ? 'Saving…' : editUserId ? 'Save Changes' : 'Create User'}
