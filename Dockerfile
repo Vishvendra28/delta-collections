@@ -23,4 +23,8 @@ COPY server ./server
 
 EXPOSE 3001
 
+# busybox wget — no curl in node:20-alpine. Hits the liveness route, which never touches the DB.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget -q --spider http://127.0.0.1:${PORT:-3001}/api/health || exit 1
+
 CMD ["node", "server/index.js"]
