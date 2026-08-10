@@ -44,6 +44,17 @@ export function Dashboard({ onNavigate }: Props) {
   const [showAllDates, setShowAllDates] = useState(false);
   const [datePage,     setDatePage]     = useState(0);
   const [sortDate,     setSortDate]     = useState<string | null>(null);
+  const summaryHeaderRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useEffect(() => {
+    if (!summaryHeaderRef.current) return;
+    setHeaderHeight(summaryHeaderRef.current.offsetHeight);
+    const obs = new ResizeObserver(() => {
+      setHeaderHeight(summaryHeaderRef.current?.offsetHeight ?? 0);
+    });
+    obs.observe(summaryHeaderRef.current);
+    return () => obs.disconnect();
+  }, []);
   const [showExport,   setShowExport]   = useState(false);
   const [expMonth,  setExpMonth]  = useState('');
   const [expFrom,   setExpFrom]   = useState('');
@@ -407,8 +418,9 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
       </div>
 
       {/* ── COLLECTION SUMMARY TABLE ── */}
-      <div className="card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="card" style={{ overflow: 'clip' }}>
+        <div style={{ maxHeight: 'calc(100vh - 130px)', overflowY: 'auto', overflowX: 'auto' }}>
+        <div ref={summaryHeaderRef} style={{ padding: '18px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, left: 0, zIndex: 10, background: 'var(--surface)' }}>
           <div>
             <div className="section-title">Collection Summary</div>
             <div className="card-header-meta">
@@ -446,12 +458,11 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
           <table>
             <thead>
               <tr>
-                <th style={{ minWidth: showAllDates ? 190 : 240, ...(showAllDates && { padding: '7px 10px' }), position: 'sticky', left: 0, background: 'var(--surface2)', zIndex: 2, borderRight: showAllDates ? '1px solid var(--border)' : undefined }}>Customer Name</th>
-                <th style={{ ...(showAllDates ? { minWidth: 62, padding: '7px 8px' } : {}), borderRight: '2px solid var(--border)' }}>KAM</th>
+                <th style={{ minWidth: showAllDates ? 190 : 240, ...(showAllDates && { padding: '7px 10px' }), position: 'sticky', left: 0, top: headerHeight, background: 'var(--surface2)', zIndex: 12, borderRight: showAllDates ? '1px solid var(--border)' : undefined }}>Customer Name</th>
+                <th style={{ ...(showAllDates ? { minWidth: 62, padding: '7px 8px' } : {}), borderRight: '2px solid var(--border)', position: 'sticky', top: headerHeight, background: 'var(--surface2)', zIndex: 9 }}>KAM</th>
                 {visibleDates.map(d => {
                   const label = new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                   const isActive = sortDate === d;
@@ -463,8 +474,9 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                         ...(showAllDates && { padding: '7px 8px' }),
                         cursor: 'pointer',
                         borderRight: '2px solid var(--border)',
-                        background: isActive ? 'var(--brand-subtle, #e8f0fe)' : undefined,
+                        background: isActive ? 'var(--brand-subtle, #e8f0fe)' : 'var(--surface2)',
                         userSelect: 'none',
+                        position: 'sticky', top: headerHeight, zIndex: 9,
                       }}
                       title="Click to sort by this date"
                     >
@@ -472,7 +484,7 @@ const uniqueCustomers = new Set(filtered.map(t => t.customer)).size;
                     </th>
                   );
                 })}
-                <th style={{ textAlign: 'right', minWidth: showAllDates ? 115 : 155, ...(showAllDates && { padding: '7px 10px' }), background: 'var(--surface2)' }}>Grand Total</th>
+                <th style={{ textAlign: 'right', minWidth: showAllDates ? 115 : 155, ...(showAllDates && { padding: '7px 10px' }), background: 'var(--surface2)', position: 'sticky', top: headerHeight, zIndex: 9 }}>Grand Total</th>
               </tr>
             </thead>
             <tbody>
