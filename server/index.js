@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+import { query } from './db.js';
 import { createTables } from './schema.js';
 import { seedDatabase, ensureAdmin, ensureFounders } from './seed.js';
 import authRouter from './routes/auth.js';
@@ -30,6 +31,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Behind Coolify's Traefik proxy there is exactly one hop, so the client IP is the
+// last entry in X-Forwarded-For. Without this, express-rate-limit keys every request
+// to the proxy's IP and the login limiter becomes one shared 10-attempt bucket.
+app.set('trust proxy', 1);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -44,6 +50,22 @@ app.use(helmet({
 }));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// Liveness probe — must stay above the requireAuth guard and must not touch the DB,
+// so a database blip never makes the orchestrator restart a healthy container.
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+// Readiness probe — verifies the DB is actually reachable. For manual/debug use.
+app.get('/api/health/db', async (req, res) => {
+  try {
+    await query('SELECT 1');
+    res.json({ status: 'ok', db: 'connected' });
+  } catch (err) {
+    res.status(503).json({ status: 'error', db: 'unreachable', message: err.message });
+  }
+});
 
 // Rate limit login attempts: 10 tries per IP per 15 minutes
 const loginLimiter = rateLimit({
