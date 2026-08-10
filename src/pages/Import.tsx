@@ -152,7 +152,7 @@ interface PreviewRow {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export function Import() {
-  const { transactions, replaceByBankMonth, clearByBankMonth } = useTransactions();
+  const { transactions, addTransactions, clearByBankMonth } = useTransactions();
   const { customers } = useCustomers();
   const { rules, excludePatterns, companyScopedExcludes } = useRules();
   const { user } = useAuth();
@@ -423,9 +423,8 @@ export function Import() {
       });
     }
 
-    const months = [...new Set(toAdd.map(t => t.date.slice(0, 7)))];
     if (toAdd.length > 0) {
-      await replaceByBankMonth(bank, months, toAdd, company);
+      await addTransactions(toAdd);
     }
     apiTransactions.fixKamRh().catch(() => {});
     setDone({ matched, review, duplicates, excluded });

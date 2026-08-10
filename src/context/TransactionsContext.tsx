@@ -111,9 +111,8 @@ export function TransactionsProvider({ children }: { children: React.ReactNode }
     const dedupeKey = (t: Transaction) =>
       t.refNo?.trim() ? t.refNo.trim() : `${t.date}|${t.amount}|${t.narration.slice(0, 40)}`;
     const existingKeys = new Set(transactions.map(dedupeKey));
-    const fresh = txs.map(t =>
-      existingKeys.has(dedupeKey(t)) ? { ...t, status: 'duplicate' as TxStatus } : t
-    );
+    const fresh = txs.filter(t => !existingKeys.has(dedupeKey(t)));
+    if (fresh.length === 0) return;
     await apiTransactions.bulkImport(fresh.map(toApiTx) as never);
     setTransactions(prev => [...prev, ...fresh]);
   }
