@@ -926,15 +926,30 @@ export function Target() {
     const gtPeriodTargets = pLabels.map((_, gi) => sorted.reduce((a, r) => a + r.periodStats[gi].target, 0));
     const gtPeriodActuals = pLabels.map((_, gi) => sorted.reduce((a, r) => a + r.periodStats[gi].actual, 0));
 
-    const trackedCustLower = new Set(Object.values(map).map(r => r.customer.toLowerCase()));
+    // Track by kam::customer pair — catches both "no target at all" and "customer
+    // in a different KAM's target" (KAM mismatch), which would otherwise fall
+    // through both the tracked and untracked buckets.
+    const trackedPairs = new Set(
+      Object.keys(map).map(k => {
+        const idx = k.indexOf('::');
+        return k.slice(0, idx).toLowerCase() + '::' + k.slice(idx + 2).toLowerCase();
+      })
+    );
     const untrackedTxns = transactions.filter(t =>
       t.status === 'matched' &&
       t.date.startsWith(selMonth) &&
       (!summaryKamFilter || t.kam === summaryKamFilter) &&
-      !trackedCustLower.has(t.customer.toLowerCase())
+      !trackedPairs.has(`${t.kam.toLowerCase()}::${t.customer.toLowerCase()}`)
     );
     const untrackedTotal = untrackedTxns.reduce((a, t) => a + t.amount, 0);
-    const untrackedCustCount = new Set(untrackedTxns.map(t => t.customer)).size;
+    // Group by customer for individual rows
+    const untrackedByCustomer: Record<string, { kam: string; amount: number }> = {};
+    for (const t of untrackedTxns) {
+      if (!untrackedByCustomer[t.customer]) untrackedByCustomer[t.customer] = { kam: t.kam, amount: 0 };
+      untrackedByCustomer[t.customer].amount += t.amount;
+    }
+    const untrackedRows = Object.entries(untrackedByCustomer).sort((a, b) => b[1].amount - a[1].amount);
+    const untrackedCustCount = untrackedRows.length;
 
     const hasFilters = !!summaryKamFilter || summarySort.col !== 'shortfall' || summarySort.dir !== 'desc';
 
@@ -1065,6 +1080,29 @@ export function Target() {
                     <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, background: achieveColor(r.achievePct) + '22', color: achieveColor(r.achievePct), border: `1px solid ${achieveColor(r.achievePct)}55` }}>
                       {statusLabel(r.achievePct)}
                     </span>
+                  </td>
+                </tr>
+              ))}
+              {untrackedRows.map(([customer, info]) => (
+                <tr key={`untracked-${customer}`} style={{ background: '#fefce8', borderTop: '1px solid #fbbf2466' }}>
+                  <td style={{ ...TD({ fontWeight: 600, color: '#92400e' }), textAlign: 'left' }}>
+                    {customer}
+                    <span style={{ fontSize: 11, fontWeight: 400, color: '#a16207', marginLeft: 8 }}>no target</span>
+                  </td>
+                  {(isAdminView || isRH) && <td style={{ ...TD({ color: 'var(--text2)', fontSize: 12 }) }}>{info.kam}</td>}
+                  {showPeriodCols && pLabels.map((_, gi) => (
+                    <React.Fragment key={gi}>
+                      <td style={{ ...TD() }} />
+                      <td style={{ ...TD() }} />
+                      <td style={{ ...TD() }} />
+                    </React.Fragment>
+                  ))}
+                  <td style={{ ...TD(), textAlign: 'right', color: '#a16207' }}>—</td>
+                  <td style={{ ...TD({ background: '#fef9c3' }), textAlign: 'right', fontWeight: 700, color: '#a16207' }}>{fmtL(info.amount)}</td>
+                  <td style={{ ...TD(), textAlign: 'right', color: '#a16207' }}>—</td>
+                  <td style={{ ...TD(), textAlign: 'right', color: '#a16207' }}>—</td>
+                  <td style={{ ...TD({ borderRight: 'none' }), textAlign: 'center' }}>
+                    <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, background: '#fef08a', color: '#854d0e', border: '1px solid #fbbf24' }}>No Target</span>
                   </td>
                 </tr>
               ))}
