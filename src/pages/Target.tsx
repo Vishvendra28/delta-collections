@@ -1148,10 +1148,10 @@ export function Target() {
                   </React.Fragment>
                 ))}
                 <td style={{ ...TD({ background: '#eff6ff33', borderLeft: showPeriodCols ? '2px solid #bfdbfe' : undefined, borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: '#1d4ed8' }}>{fmtL(gtTarget)}</td>
-                <td style={{ ...TD({ background: '#f0fdf433', borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: '#15803d' }}>{fmtL(gtActual)}</td>
-                <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: gtShortfall > 0 ? '#ef4444' : '#22c55e' }}>{gtShortfall > 0 ? fmtL(gtShortfall) : '—'}</td>
-                <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: gtShortfall > 0 ? '#ef4444' : '#22c55e' }}>
-                  {gtTarget > 0 ? `${((gtShortfall / gtTarget) * 100).toFixed(1)}%` : '—'}
+                <td style={{ ...TD({ background: '#f0fdf433', borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: '#15803d' }}>{fmtL(gtActual + untrackedTotal)}</td>
+                <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: Math.max(0, gtShortfall - untrackedTotal) > 0 ? '#ef4444' : '#22c55e' }}>{Math.max(0, gtShortfall - untrackedTotal) > 0 ? fmtL(Math.max(0, gtShortfall - untrackedTotal)) : '—'}</td>
+                <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', fontWeight: 800, color: Math.max(0, gtShortfall - untrackedTotal) > 0 ? '#ef4444' : '#22c55e' }}>
+                  {gtTarget > 0 ? `${(Math.max(0, gtShortfall - untrackedTotal) / gtTarget * 100).toFixed(1)}%` : '—'}
                 </td>
                 <td style={{ ...TD({ borderRight: 'none', borderBottom: 'none' }) }} />
               </tr>
