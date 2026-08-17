@@ -124,7 +124,7 @@ function computeKamData(
     custs.map(customer => {
       const target = rows.filter(r => r.customer === customer).reduce((a, r) => a + periodAmts(r)[i], 0);
       if (target === 0) return null;
-      const actual = ktxns.filter(t => { const d = +t.date.slice(8); return t.customer === customer && d >= s && d <= e; }).reduce((a, t) => a + t.amount, 0);
+      const actual = ktxns.filter(t => { const d = +t.date.slice(8); return t.customer.toLowerCase() === customer.toLowerCase() && d >= s && d <= e; }).reduce((a, t) => a + t.amount, 0);
       return { customer, target, actual, remaining: Math.max(0, target - actual), pct: target > 0 ? Math.min(100, (actual / target) * 100) : actual > 0 ? 100 : 0 };
     }).filter((x): x is CustStat => x !== null).sort((a, b) => b.target - a.target)
   );
