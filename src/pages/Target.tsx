@@ -71,7 +71,6 @@ function prevMonthOf(m: string): string {
 function fmtL(n: number): string {
   const abs = Math.abs(n);
   const sign = n < 0 ? '-' : '';
-  if (abs >= 1e7) return `${sign}₹${(abs / 1e7).toFixed(2)} Cr`;
   if (abs >= 1e5) return `${sign}₹${(abs / 1e5).toFixed(2)} L`;
   return `${sign}₹${abs.toLocaleString('en-IN')}`;
 }
