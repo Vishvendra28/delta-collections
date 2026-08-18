@@ -1108,31 +1108,6 @@ export function Target() {
               ))}
             </tbody>
             <tfoot>
-              {untrackedTotal > 0 && (
-                <tr style={{ background: '#fefce8', borderTop: '2px solid #fbbf24' }}>
-                  <td style={{ ...TD({ borderBottom: 'none', fontWeight: 700, color: '#92400e' }), textAlign: 'left' }}>
-                    Untracked Collections
-                    <span style={{ fontSize: 11, fontWeight: 400, color: '#a16207', marginLeft: 8 }}>
-                      {untrackedCustCount} customer{untrackedCustCount !== 1 ? 's' : ''} · no target set
-                    </span>
-                  </td>
-                  {(isAdminView || isRH) && <td style={{ ...TD({ borderBottom: 'none' }) }} />}
-                  {showPeriodCols && pLabels.map((_, gi) => (
-                    <React.Fragment key={gi}>
-                      <td style={{ ...TD({ borderBottom: 'none' }) }} />
-                      <td style={{ ...TD({ borderBottom: 'none' }) }} />
-                      <td style={{ ...TD({ borderBottom: 'none' }) }} />
-                    </React.Fragment>
-                  ))}
-                  <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', color: '#a16207' }}>—</td>
-                  <td style={{ ...TD({ background: '#fef9c3', borderBottom: 'none' }), textAlign: 'right', fontWeight: 700, color: '#a16207' }}>{fmtL(untrackedTotal)}</td>
-                  <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', color: '#a16207' }}>—</td>
-                  <td style={{ ...TD({ borderBottom: 'none' }), textAlign: 'right', color: '#a16207' }}>—</td>
-                  <td style={{ ...TD({ borderRight: 'none', borderBottom: 'none' }), textAlign: 'center' }}>
-                    <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600, background: '#fef08a', color: '#854d0e', border: '1px solid #fbbf24' }}>No Target</span>
-                  </td>
-                </tr>
-              )}
               <tr style={{ background: 'var(--bg)', borderTop: '3px solid var(--border)' }}>
                 <td style={{ ...TD({ fontWeight: 800, borderBottom: 'none' }), textAlign: 'left' }}>Grand Total</td>
                 {(isAdminView || isRH) && <td style={{ ...TD({ borderBottom: 'none' }) }} />}
